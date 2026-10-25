@@ -1,1 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Llamaz Chat Rooms</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🦙%3C/text%3E%3C/svg%3E">
+<style>
+:root{--side:#0F2F33;--side-ink:#D7ECEA;--side-hover:#17434A;--side-on:#1F5A62;--bg:#fff;--ink:#13272B;--muted:#587074;--line:#DCE7E5;--input:#EEF4F3;--link:#0B6B75;--accent:#F2B531;--ring:#0F5C63;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0F1D20;--ink:#E4F0EE;--muted:#8FA9AD;--line:#1F3438;--input:#172A2E;--link:#6CCBD3;--ring:#F2B531;color-scheme:dark}}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:400 1rem/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[hidden]{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.app{display:grid;grid-template-columns:72px 240px 1fr 220px;height:100vh;height:100dvh}
+aside{background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;gap:.5rem;padding:1rem .8rem;min-height:0}
+.brand{font-weight:700;font-size:1.1rem;padding:.2rem .5rem .8rem}
+.label{font-size:.85rem;opacity:.7;padding:0 .5rem}
+nav{flex:1;overflow:auto}
+.room{display:block;width:100%;text-align:left;background:none;border:0;padding:.45rem .6rem;border-radius:.5rem}
+.room:hover{background:var(--side-hover)}
+.room.on{background:var(--side-on);font-weight:600}
+#joinF{display:flex;gap:.4rem}
+#joinF input{flex:1;min-width:0;background:#0B2327;border:1px solid #24474D;color:inherit;border-radius:.5rem;padding:.5rem .6rem;font:inherit}
+#joinF button{background:var(--accent);color:#2A1F00;border:0;border-radius:.5rem;padding:0 .8rem;font-weight:600}
+.ghost{background:none;border:1px dashed #3A6870;border-radius:.5rem;padding:.45rem}
+.hint{font-size:.8rem;opacity:.7;margin:.1rem .5rem}
+.me{display:flex;align-items:center;gap:.6rem;background:var(--side-hover);border:0;border-radius:.6rem;padding:.5rem .6rem;text-align:left}
+.me .av{width:32px;height:32px;font-size:.9rem}
+main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+header{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:1.05rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:.6rem;height:.6rem;border-radius:50%;background:#C9A23A;flex:none}
+.dot.live{background:#2FB67C}
+#state,#count{font-size:.8rem;color:var(--muted);white-space:nowrap}
+#invite,#menu{border:1px solid var(--line);background:none;border-radius:.5rem;padding:.35rem .7rem}
+#invite{margin-left:auto}
+#menu{display:none}
+#log{flex:1;min-height:0;overflow-y:auto;list-style:none;margin:0;padding:.5rem 1rem 1rem;display:flex;flex-direction:column}
+.msg{position:relative;display:grid;grid-template-columns:40px 1fr;gap:0 .75rem;padding:.1rem .5rem;border-radius:.5rem}
+.msg:hover,.msg.sel{background:var(--input)}
+.msg.first{margin-top:.9rem}
+.msg.ment{background:#F2B53127;box-shadow:inset 3px 0 var(--accent)}
+.av{position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700}
+.av.on::after{content:"";position:absolute;right:-2px;bottom:-2px;width:.6rem;height:.6rem;border-radius:50%;background:#2FB67C;border:2px solid var(--bg)}
+.tm{font-size:.7rem;color:var(--muted);text-align:center;align-self:center;opacity:0}
+.msg:hover .tm{opacity:1}
+.head{display:flex;gap:.5rem;align-items:baseline}
+.head time{font-size:.75rem;color:var(--muted)}
+.txt{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.txt a{color:var(--link)}
+.txt code{background:var(--input);border-radius:.3rem;padding:0 .3rem;font:.9em ui-monospace,Menlo,Consolas,monospace}
+.act .txt{font-style:italic;color:var(--muted)}
+.pending .txt{opacity:.55}
+.quote{border-left:3px solid var(--line);padding:.05rem .6rem;margin:.1rem 0 .25rem;color:var(--muted);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rx{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.25rem}
+.rx button{background:var(--input);border:1px solid transparent;border-radius:999px;padding:.05rem .55rem;font-size:.85rem}
+.rx button.me{border-color:var(--ring);background:transparent}
+.tools{display:none;position:absolute;right:.5rem;top:-.9rem;gap:.1rem;background:var(--bg);border:1px solid var(--line);border-radius:.6rem;padding:.1rem .2rem;box-shadow:0 2px 8px #0002;z-index:1}
+.msg:hover .tools,.msg.sel .tools,.msg:focus-within .tools{display:flex}
+.tools button{background:none;border:0;border-radius:.4rem;padding:.15rem .35rem}
+.tools button:hover{background:var(--input)}
+.tools .rp{font-size:.8rem;color:var(--muted)}
+li.day{display:flex;align-items:center;gap:.8rem;color:var(--muted);font-size:.75rem;margin:1rem 0 .2rem}
+li.day::before,li.day::after{content:"";flex:1;border-top:1px solid var(--line)}
+li.sys{text-align:center;color:var(--muted);font-size:.85rem;margin:.4rem 0}
+li.empty{margin:auto;color:var(--muted);text-align:center;padding:1rem}
+#notice{margin:0 1rem .5rem;padding:.5rem .8rem;border-radius:.6rem;background:var(--input);font-size:.9rem}
+#replybar{display:flex;gap:.5rem;align-items:center;margin:0 1rem .4rem;padding:.4rem .8rem;border-radius:.6rem;background:var(--input);font-size:.85rem;color:var(--muted)}
+#rt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rc{background:none;border:0}
+#compose{display:flex;align-items:flex-end;gap:.4rem;margin:0 1rem 1rem;padding:.4rem .5rem .4rem .9rem;background:var(--input);border-radius:.9rem}
+#compose:focus-within{box-shadow:0 0 0 2px var(--ring)}
+textarea{flex:1;border:0;outline:0;background:transparent;font:inherit;color:var(--ink);resize:none;max-height:140px;padding:.45rem 0}
+.ib{background:none;border:0;font-size:1.3rem;height:40px;padding:0 .3rem}
+.send{width:40px;height:40px;border:0;border-radius:.7rem;background:var(--accent);color:#2A1F00;display:grid;place-items:center}
+#emojis{position:absolute;right:1rem;bottom:4.6rem;display:grid;grid-template-columns:repeat(8,1fr);gap:.1rem;background:var(--bg);border:1px solid var(--line);border-radius:.8rem;padding:.4rem;box-shadow:0 6px 24px #0004;z-index:2}
+#emojis button{background:none;border:0;border-radius:.4rem;font-size:1.3rem;padding:.2rem}
+#emojis button:hover{background:var(--input)}
+#people{border-left:1px solid var(--line);padding:1rem .8rem;overflow:auto;min-height:0}
+#people h2{font-size:.85rem;color:var(--muted);margin:.2rem .4rem 0;font-weight:600}
+#people small{display:block;color:var(--muted);font-size:.75rem;margin:0 .4rem .6rem}
+.pr{display:flex;align-items:center;gap:.6rem;padding:.35rem .4rem;border-radius:.5rem}
+.pr .av{width:28px;height:28px;font-size:.8rem}
+.pr.off{opacity:.55}
+dialog{border:1px solid var(--line);border-radius:1rem;background:var(--bg);color:var(--ink);padding:1.4rem;width:min(22rem,90vw)}
+dialog::backdrop{background:#0009}
+dialog h2{margin:0 0 .8rem;font-size:1.15rem}
+#nameF{display:flex;flex-direction:column;gap:.8rem}
+#nameF input{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .8rem}
+#nameF button{background:var(--accent);color:#2A1F00;border:0;border-radius:.6rem;padding:.6rem;font-weight:600}
+#scrim{display:none}
+#auth{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:var(--side);padding:1rem;overflow:auto}
+#authF{width:min(24rem,100%);background:var(--bg);border-radius:1.2rem;padding:1.6rem;display:flex;flex-direction:column;gap:.9rem;box-shadow:0 20px 60px #0006}
+.abrand{font-size:2.6rem;line-height:1;text-align:center}
+.atitle{text-align:center;font-size:1.3rem;font-weight:700}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--input);border-radius:.7rem;padding:.2rem}
+.tabs button{background:none;border:0;border-radius:.5rem;padding:.45rem}
+.tabs .on{background:var(--bg);font-weight:600;box-shadow:0 1px 4px #0003}
+label{display:flex;flex-direction:column;gap:.3rem;font-size:.9rem;color:var(--muted)}
+#authF input,#profF input,#profF textarea{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .8rem}
+#aerr{margin:0;color:#D6344A;font-size:.9rem}
+.go{background:var(--accent);color:#2A1F00;border:0;border-radius:.6rem;padding:.65rem;font-weight:600}
+.anote{margin:0;font-size:.78rem;color:var(--muted)}
+.stt{display:block;font-size:.75rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me .mi{min-width:0}.me .mi b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.me .stt{color:var(--side-ink);opacity:.7}
+button.pr{width:100%;background:none;border:0;text-align:left}.pr>span{min-width:0}
+.msg .av,.who{cursor:pointer}
+.av{font-size:1.15rem}
+.av.big{width:64px;height:64px;font-size:2rem}
+#profD{width:min(26rem,92vw);max-height:90vh;overflow:auto}
+#profF{display:flex;flex-direction:column;gap:.7rem}
+.ppre{display:flex;align-items:center;gap:.8rem;font-size:.85rem;color:var(--muted)}
+#pem{display:grid;grid-template-columns:repeat(8,1fr);gap:.1rem}
+#pem button{background:none;border:0;border-radius:.4rem;font-size:1.3rem;padding:.2rem}
+.sw{display:flex;gap:.4rem;flex-wrap:wrap}
+.sw button{width:28px;height:28px;border-radius:50%;border:0}
+#pem .sel,.sw .sel{outline:2px solid var(--ring);outline-offset:1px}
+.row{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.4rem}
+.row button{border:1px solid var(--line);background:none;border-radius:.6rem;padding:.5rem .9rem}
+.row .go{background:var(--accent);border:0}
+#cardD{padding:0;overflow:hidden;width:min(20rem,90vw)}
+.ban{height:70px}
+.cbody{padding:0 1.2rem 1.2rem}
+.cbody .big{margin-top:-32px;border:4px solid var(--bg)}
+#cnm{margin:.4rem 0 0}
+#cst,#cbio{margin:.4rem 0}
+.who{color:color-mix(in srgb,var(--nc,var(--ink)) 65%,var(--ink))}
+.tags{display:flex;flex-wrap:wrap;gap:.3rem;margin:.3rem 0}
+.tag{background:var(--input);border-radius:999px;padding:.05rem .6rem;font-size:.8rem}
+.ed{color:var(--muted);font-size:.7rem}
+.lnk{background:none;border:0;color:var(--link);padding:0;font-size:.85rem;text-decoration:underline}
+.pprev{border:1px solid var(--line);border-radius:.8rem;overflow:hidden}
+.pprev .ban{height:56px}
+.pbody{padding:0 .9rem .7rem;display:flex;flex-direction:column}
+.pbody .big{margin-top:-32px;border:4px solid var(--bg)}
+#pnm2{margin-top:.3rem}
+.crow{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}
+.inl{flex-direction:row;align-items:center;gap:.5rem}
+#profF input[type=color]{width:36px;height:30px;padding:0}
+#profF select{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.5rem .6rem}
+#pbx{border:1px solid var(--line);background:none;border-radius:.6rem;padding:.3rem .7rem}
+.row #pexp{margin-right:auto}
+#q{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.3rem .7rem;width:11rem;min-width:0}
+#jump{position:absolute;left:50%;transform:translateX(-50%);bottom:4.8rem;z-index:2;background:var(--ring);color:var(--bg);border:0;border-radius:999px;padding:.4rem .9rem;box-shadow:0 4px 14px #0004}
+.rrow{display:flex}
+.rrow .room{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rx2{background:none;border:0;opacity:0;padding:0 .6rem;border-radius:.5rem}
+.rrow:hover .rx2,.rx2:focus-visible{opacity:.8}
+.rx2:hover{background:var(--side-hover)}
+@media (hover:none){.rx2{opacity:.6}}
+@media (max-width:720px){#q{width:7rem}#count{display:none}}
+@media (max-width:1000px){.app{grid-template-columns:72px 240px 1fr}#people{display:none}}
+@media (max-width:720px){
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;inset:0 auto 0 0;width:280px;transform:translateX(-100%);z-index:3}
+  .open aside{transform:none}
+  .open #scrim{display:block;position:fixed;inset:0;background:#0008;z-index:2}
+  #menu{display:block}
+}
+@media (max-width:720px) and (prefers-reduced-motion:no-preference){aside{transition:transform .2s}}
+#rail{background:#0A2327;display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:.7rem 0;overflow-y:auto;min-height:0}
+.srv{position:relative;width:48px;height:48px;flex:none;border:0;border-radius:50%;background:var(--side-hover);color:#fff;font-size:1.25rem;font-weight:700;display:grid;place-items:center;transition:border-radius .15s}
+.srv:hover,.srv.on{border-radius:16px}
+.srv.on::before{content:"";position:absolute;left:-12px;top:12px;width:4px;height:24px;border-radius:0 4px 4px 0;background:#fff}
+.srv.add{background:none;border:1px dashed #3A6870;font-size:1.5rem;color:var(--side-ink)}
+.sep{width:32px;border-top:2px solid #17434A;flex:none}
+button.brand{background:none;border:0;color:inherit;text-align:left;width:100%}
+.label{display:flex;justify-content:space-between;align-items:center}
+.plus{background:none;border:0;color:inherit;font-size:1.2rem;padding:0 .4rem}
+#srvD,#smD{width:min(24rem,92vw)}
+#srvD form{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem}
+#srvD input{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .8rem}
+#serr{margin:0 0 .6rem;color:#D6344A;font-size:.9rem}
+.menu{display:flex;flex-direction:column;gap:.4rem}
+.menu button{border:1px solid var(--line);background:none;border-radius:.6rem;padding:.6rem;text-align:left}
+@media (prefers-reduced-motion:reduce){.srv{transition:none}}
+@media (max-width:720px){aside{inset:0 auto 0 72px;width:240px;transform:translateX(calc(-100% - 72px))}#rail{position:fixed;inset:0 auto 0 0;width:72px;transform:translateX(-100%);z-index:3}.open #rail{transform:none}}
 
+#profD{width:min(46rem,94vw)}
+.phead{display:flex;justify-content:space-between;align-items:center}
+.phead h2{margin:0}
+.x{background:none;border:0;font-size:1.1rem}
+.pgrid{display:grid;grid-template-columns:1fr 15rem;gap:1.2rem}
+.pform,.pane{display:flex;flex-direction:column;gap:.7rem}
+.pside{display:flex;flex-direction:column;gap:.4rem}
+.tabs.t3{grid-template-columns:repeat(3,1fr)}
+.sub{font-size:.8rem;color:var(--muted);font-weight:600}
+.prow,.chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.prow button,.chips button{border:1px solid var(--line);background:none;border-radius:.6rem;padding:.4rem .8rem}
+.cnt{float:right;font-size:.75rem}
+#pbio2{margin:.3rem 0;font-size:.9rem;overflow-wrap:anywhere}
+.file{margin-top:.3rem}
+.file img{display:block;max-width:min(20rem,100%);max-height:16rem;border-radius:.6rem}
+.fchip{display:inline-flex;gap:.5rem;align-items:center;background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.5rem .8rem;color:var(--ink);text-decoration:none}
+.fmeta{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+main.drag{outline:3px dashed var(--ring);outline-offset:-6px}
+@media (max-width:720px){.pgrid{grid-template-columns:1fr}.pside{order:-1}}
+.frow{display:flex;gap:.4rem;align-items:center;padding:.3rem 0;flex-wrap:wrap}
+.frow span{flex:1;min-width:8rem;overflow-wrap:anywhere}
+.frow button,.cx button{border:1px solid var(--line);background:none;border-radius:.5rem;padding:.25rem .6rem;font-size:.85rem}
+.cx{justify-content:flex-start;flex-wrap:wrap;margin:.5rem 0 0}
+#frD,#repD,#ownD{width:min(30rem,94vw)}
+#repV{width:min(42rem,94vw);max-height:90vh;overflow:auto}
+#repF,#ownF{display:flex;flex-direction:column;gap:.7rem}
+#repF textarea,#repF select,#ownF input{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .8rem}
+#repE,#ownE{margin:0;color:#D6344A;font-size:.9rem}
+.warn{border:1px solid var(--accent);border-radius:.6rem;padding:.2rem .8rem .8rem;font-size:.85rem;margin:.6rem 0}
+.warn code{display:block;overflow-wrap:anywhere;font-size:.8rem;background:var(--input);padding:.4rem;border-radius:.4rem}
+.tr{border:1px solid var(--line);border-radius:.6rem;padding:.3rem .8rem;max-height:18rem;overflow:auto;margin-bottom:.8rem}
+.tr p{margin:.25rem 0;overflow-wrap:anywhere}
+.tr time{color:var(--muted);font-size:.75rem}
+#banned{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:var(--side);padding:1rem}
+.bbox{background:var(--bg);color:var(--ink);border-radius:1.2rem;padding:1.6rem;max-width:24rem;text-align:center;display:flex;flex-direction:column;gap:.8rem}
+.row .danger{background:#D6344A;color:#fff;border:0}
+#toD,#resD{width:min(24rem,92vw)}
+#resD{text-align:center}
+#resD .row{justify-content:center}
+#toF{display:flex;flex-direction:column;gap:.7rem}
+#toF input,#toF select{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .8rem}
+#toN{width:5rem}
+.tgb{display:inline-block;margin-left:.4rem;padding:0 .5rem;border-radius:999px;background:var(--tc);color:#fff;font-size:.7rem;font-weight:700;vertical-align:middle;line-height:1.5}
+#ctag{margin:.2rem 0}
+#tagF{display:flex;flex-direction:column;gap:.6rem;margin:.4rem 0 .8rem}
+#tagF input,#tagF select{font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:.6rem;padding:.5rem .8rem}
+#tgE{margin:0;color:#D6344A;font-size:.9rem}
+</style>
+</head>
+<body>
+<section id="auth" hidden>
+  <form id="authF">
+    <div class="abrand">🦙</div>
+    <div class="atitle">Llamaz Chat Rooms</div>
+    <div class="tabs"><button type="button" id="tLogin" class="on">Log in</button><button type="button" id="tSign">Sign up</button></div>
+    <label>Username<input id="au" maxlength="20" autocomplete="username" autocapitalize="none" required></label>
+    <label>Password<input id="ap" type="password" autocomplete="current-password" required></label>
+    <label id="cw" hidden>Confirm password<input id="ap2" type="password" autocomplete="new-password"></label>
+    <p id="aerr" role="alert" hidden></p>
+    <button id="asub" class="go" type="submit">Log in</button>
+    <button type="button" id="imp" class="lnk">Have an account file? Import it</button><button type="button" id="ownLnk" class="lnk">Owner access</button><input id="impf" type="file" accept=".json,application/json" hidden>
+    <p class="anote">Accounts are saved in this browser only; export one from your profile to move it. Chat goes through a public relay, so don’t reuse a password that matters.</p>
+  </form>
+</section>
+<section id="banned" hidden>
+  <div class="bbox">
+    <div class="abrand">🚫</div>
+    <div class="atitle" id="banT">Your account has been banned</div>
+    <p class="anote" id="banP">The Llamaz team reviewed a report and banned this account, so you can’t read or send messages with it.</p>
+    <button id="banOut" class="go" type="button">Log out</button>
+  </div>
+</section>
+<div class="app" id="app" hidden>
+  <nav id="rail" aria-label="Servers"></nav>
+  <aside>
+    <button class="brand" id="sname" type="button">🦙 Llamaz Chat Rooms</button>
+    <div class="label"><span id="slab">Direct rooms</span><button id="addch" class="plus" type="button" aria-label="Add a channel" hidden>+</button></div>
+    <nav id="rooms"></nav>
+    <form id="joinF">
+      <input id="code" maxlength="40" placeholder="Room code" aria-label="Room code">
+      <button type="submit">Join</button>
+    </form>
+    <button id="newBtn" class="ghost" type="button">New private room</button>
+    <p class="hint" id="hint1">Anyone who has a room’s code can read and post in it. Use a long, unguessable code for private chats.</p>
+    <p class="hint">Try /me, /shrug and /nick. Format with **bold**, *italic* or `code`. Type @name to mention someone.</p>
+    <button id="frBtn" class="ghost" type="button">👥 Friends</button>
+    <button id="snd" class="ghost" type="button"></button>
+    <button id="out" class="ghost" type="button">Log out</button>
+    <button id="me" class="me" type="button" aria-label="Edit your profile"><span class="av" id="meAv"></span><span id="meName"></span></button>
+  </aside>
+  <div id="scrim"></div>
+  <main>
+    <header>
+      <button id="menu" type="button" aria-label="Show rooms">☰</button>
+      <h1 id="title"></h1>
+      <span class="dot" id="dot"></span><span id="state">Connecting…</span>
+      <span id="count" title="People seen in this room in the last 12 hours"></span>
+      <input id="q" type="search" placeholder="Search this room" aria-label="Search this room">
+      <button id="invite" type="button"></button>
+    </header>
+    <ol id="log" aria-label="Messages"></ol>
+    <p id="notice" role="status" hidden></p>
+    <p id="replybar" hidden><span id="rt"></span><button id="rc" type="button" aria-label="Cancel reply">✕</button></p>
+    <div id="emojis" hidden></div>
+    <button id="jump" type="button" hidden>Jump to latest ↓</button>
+    <form id="compose">
+      <textarea id="msg" rows="1" maxlength="500" aria-label="Message"></textarea>
+      <button id="attBtn" class="ib" type="button" aria-label="Attach a file" title="Attach a file (up to 15 MB)">📎</button><input id="fup" type="file" multiple hidden>
+      <button id="emojiBtn" class="ib" type="button" aria-label="Add emoji">🙂</button>
+      <button class="send" type="submit" aria-label="Send message"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg></button>
+    </form>
+  </main>
+  <section id="people" aria-label="People">
+    <h2>Recently active</h2>
+    <small>From the last 12 hours of messages</small>
+    <div id="plist"></div>
+  </section>
+</div>
+<dialog id="profD">
+  <form id="profF">
+    <div class="phead"><h2>Your profile</h2><button type="button" id="pcan" class="x" aria-label="Close">✕</button></div>
+    <div class="pgrid">
+      <div class="pform">
+        <div class="tabs t3 ptabs"><button type="button" class="on" data-t="0">Look</button><button type="button" data-t="1">About</button><button type="button" data-t="2">Status</button></div>
+        <div class="pane" data-p="0">
+          <div class="prow"><button type="button" id="pup">Upload photo</button><button type="button" id="prm" hidden>Remove photo</button><button type="button" id="prnd">🎲 Surprise me</button><input type="file" id="pfile" accept="image/*" hidden></div>
+          <div class="sub">Emoji avatar</div>
+          <div id="pem"></div>
+          <div class="sub">Color</div>
+          <div class="sw" id="psw"></div>
+          <div class="crow"><label class="inl">Custom<input type="color" id="pcc" value="#3E7BFA"></label><label class="inl">Banner<input type="color" id="pbc" value="#0F5C63"></label><button type="button" id="pbx">Auto banner</button></div>
+        </div>
+        <div class="pane" data-p="1" hidden>
+          <label>Display name<input id="pn" maxlength="24" required></label>
+          <label>Pronouns<input id="ppr" maxlength="20" placeholder="she/her, he/him, they/them…"></label>
+          <label>About you <span class="cnt" id="bcnt"></span><textarea id="pbio" rows="4" maxlength="160" placeholder="A line or two about you"></textarea></label>
+          <label>Interests (comma-separated, up to 5)<input id="ptg" maxlength="80" placeholder="music, hiking, anime"></label>
+        </div>
+        <div class="pane" data-p="2" hidden>
+          <label>Status<input id="pst" maxlength="40" placeholder="What are you up to? 🎮"></label>
+          <div class="chips" id="pre"></div>
+          <label>Clear status after<select id="psx"><option value="k">Keep as is</option><option value="0">Never</option><option value="1">1 hour</option><option value="4">4 hours</option><option value="d">Today</option></select></label>
+        </div>
+      </div>
+      <div class="pside">
+        <div class="sub">What others see</div>
+        <div class="pprev"><div class="ban" id="pban"></div><div class="pbody"><div class="av big" id="pav"></div><b id="pnm2"></b><span class="stt" id="ppr2"></span><span class="stt" id="pst2"></span><p id="pbio2"></p><div class="tags" id="ptg2"></div></div></div>
+      </div>
+    </div>
+    <div class="row"><button type="button" id="pexp" title="Saves a file you can import on another device. Keep it private.">Export account</button><button type="button" id="pid" title="Share this with the owner so they can give you a staff tag">Copy account ID</button><button type="submit" class="go">Save profile</button></div>
+  </form>
+</dialog>
+<dialog id="cardD">
+  <div class="ban" id="cban"></div>
+  <div class="cbody">
+    <div id="cav"></div>
+    <h2 id="cnm"></h2>
+    <div id="ctag" hidden></div>
+    <div class="stt" id="cpr"></div>
+    <p id="cst"></p>
+    <div class="tags" id="ctg"></div>
+    <p id="cbio"></p>
+    <div class="stt" id="cseen"></div>
+    <div class="row cx" id="cx"></div>
+    <div class="row"><button type="button" id="ccl">Close</button><button type="button" id="cact" class="go"></button></div>
+  </div>
+</dialog>
+<dialog id="srvD">
+  <h2>Add a server</h2>
+  <form id="srvNew">
+    <label>Create your own<input id="sn" maxlength="30" placeholder="Server name"></label>
+    <label>Icon emoji (optional)<input id="si" maxlength="4" placeholder="🎮"></label>
+    <button class="go" type="submit">Create server</button>
+  </form>
+  <form id="srvJoin">
+    <label>Or join with an invite<input id="sj" placeholder="Paste an invite link or code"></label>
+    <button class="go" type="submit">Join server</button>
+  </form>
+  <p id="serr" role="alert" hidden></p>
+  <div class="row"><button type="button" id="scl">Close</button></div>
+</dialog>
+<dialog id="smD">
+  <h2 id="smT"></h2>
+  <div class="menu">
+    <button type="button" id="smInv">Copy invite</button>
+    <button type="button" id="smAdd">Add a channel</button>
+    <button type="button" id="smLv">Leave server</button>
+    <button type="button" id="smX">Close</button>
+  </div>
+</dialog>
+<dialog id="frD">
+  <div class="phead"><h2>Friends</h2><button type="button" id="frX" class="x" aria-label="Close">✕</button></div>
+  <div id="frBody"></div>
+</dialog>
+<dialog id="repD">
+  <form id="repF">
+    <h2 id="repT">Report</h2>
+    <label>Reason<select id="repR"><option>Harassment or bullying</option><option>Spam or scams</option><option>Inappropriate content</option><option>Impersonation</option><option>Something else</option></select></label>
+    <label>Details (optional)<textarea id="repN" rows="3" maxlength="300"></textarea></label>
+    <p class="anote">Reporting sends this user’s ID, your reason, your direct messages with them, and the recent messages in this room to the Llamaz team (account _llamaz_). Only the owner can read it.</p>
+    <p id="repE" role="alert" hidden></p>
+    <div class="row"><button type="button" id="repC">Cancel</button><button type="submit" class="go" id="repS">Send report</button></div>
+  </form>
+</dialog>
+<dialog id="ownD">
+  <div class="phead"><h2>Owner access</h2><button type="button" id="ownX" class="x" aria-label="Close">✕</button></div>
+  <form id="ownF">
+    <p class="anote" id="ownP"></p>
+    <label>Passphrase<input id="ownPw" type="password" autocomplete="off"></label>
+    <label id="ownC" hidden>Repeat passphrase<input id="ownPw2" type="password" autocomplete="off"></label>
+    <p id="ownE" role="alert" hidden></p>
+    <button class="go" type="submit" id="ownB"></button>
+  </form>
+  <div id="ownBox" hidden>
+    <div id="ownMsg"></div>
+    <div id="ownList"></div>
+    <div class="sub">Staff tags</div>
+    <div id="ownTagList"></div>
+    <form id="tagF">
+      <label>Account ID (they get it from Your profile, then Copy account ID)<input id="tgId" autocomplete="off"></label>
+      <div class="crow"><select id="tgL"><option>Owner</option><option>Dev</option><option>Beta tester</option><option>Test account</option><option value="">Custom…</option></select><input id="tgC" maxlength="16" placeholder="Custom tag" hidden></div>
+      <label>Who is it? (only you see this)<input id="tgN" maxlength="24"></label>
+      <p id="tgE" role="alert" hidden></p>
+      <button class="go" type="submit">Add tag</button>
+    </form>
+    <div class="row"><button type="button" id="ownLock">Lock</button></div>
+  </div>
+</dialog>
+<dialog id="repV"><div id="repVB"></div><div class="row"><button type="button" id="repVX">Close</button></div></dialog>
+<dialog id="toD">
+  <form id="toF">
+    <h2 id="toT">Time out</h2>
+    <label>Length<span class="crow"><input id="toN" type="number" min="1" max="99" value="3"><select id="toU"><option value="d">days</option><option value="w">weeks</option><option value="m">months (30 days)</option></select></span></label>
+    <p class="anote">They’ll be locked out of the app until it ends, and the person who reported them will be told.</p>
+    <div class="row"><button type="button" id="toC">Cancel</button><button type="submit" class="go">Time out</button></div>
+  </form>
+</dialog>
+<dialog id="resD">
+  <div class="abrand" id="resI">✅</div>
+  <h2>Update on your report</h2>
+  <p id="resP"></p>
+  <div class="row"><button type="button" id="resOK" class="go">OK</button></div>
+</dialog>
+<dialog id="nameD">
+  <form id="nameF">
+    <h2>Pick a display name</h2>
+    <input id="nm" maxlength="24" autocomplete="nickname" aria-label="Display name" required>
+    <button type="submit">Start chatting</button>
+  </form>
+</dialog>
+<script>
+(function(){
+// Messages are relayed through a free public pub/sub server. Swap this for your own ntfy server if you host one.
+const SERVER='https://ntfy.sh',PREFIX='llamaz-';
+// Owner: open Owner access on the sign-in screen, then replace the next line with the one it shows you.
+const ADMIN_PUB={x:'i2ll95_W80IwV0CDEZ2hemCKVJwp47S13rGQXczqOmQ',y:'uBvRsCz2y-3C6x5AOjJjr0cC5T3XE4NlJnMmJxOiD0U',sx:'9R9k7hcKqrPO7ryBI_aLHuuq1pQ3tiNhpCqtJ-cpc9Q',sy:'qtHz2mBc4dTx2lMb6ayC_q4_7MkZ1XPbV5bx6DnNkMs'};
+// Owner: Owner access can also give you a line to paste here that permanently bans people.
+const BANNED=[];
+// Owner: Owner access can also give you a line to paste here that makes staff tags permanent.
+const STAFF=[["o9ci1z0k4cvm","Owner","3IFTLShUFfvEGGq4bBjAOQSKi3AM5xkSa3J_05Z_EQ4","oeeybcdSBrmpRKu9DOR8Bj9JKji3p26BQi0dJj__qiA"],["anixw0sadtf8","Test account","oOxbPyH6quTZHM8Z54sf6M8NWcWUX6tfl30G6r-9WkE","_iRAL-TcOPILpthm1dG83TpCMwRK72996aEZ4lKMmlQ"]];
+const $=id=>document.getElementById(id);
+const app=$('app'),log=$('log'),msg=$('msg'),notice=$('notice'),nav=$('rooms'),dot=$('dot'),state=$('state'),title=$('title'),invite=$('invite'),nameD=$('nameD'),nm=$('nm'),emojis=$('emojis'),bar=$('replybar');
+const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const rand=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>'abcdefghijklmnopqrstuvwxyz0123456789'[b%36]).join('');
+const clean=s=>s.toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+const hue=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h};
+const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
+const clock=ts=>new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+const stamp=ts=>new Date(ts).toDateString()===new Date().toDateString()?clock(ts):new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'})+', '+clock(ts);
+const initial=n=>{const c=Array.from(n)[0];return c?c.toUpperCase():'?'};
+const dayLabel=ts=>{const d=new Date(ts).toDateString(),n=new Date();return d===n.toDateString()?'Today':d===new Date(n-864e5).toDateString()?'Yesterday':new Date(ts).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})};
+const why=e=>e===429?'The free relay is rate-limiting you. Wait a few seconds and try again.':'Couldn’t reach the relay. Check your connection and try again.';
+const QUICK=['👍','💖','😂','🎉'];
+const EMOJI=Array.from('😀😂😅😊😍😘😎🤔😢😭😡😴🤯🥳🤝👍👎👏🙌🙏💪👀🔥✨💯💖💔🎉🎶🍕☕🌈⭐✅❌🦙🐶🐱🌮🍔🚀😬🙈👋🤣😇🥺');
+
+let uid='',acct=null;const profiles=new Map();
+let name='',rooms=store.get('cr-rooms',[]),room='',es=null,msgs=[],seen=new Map(),reacts=new Map(),queued=false,reply=null,unread=0,snd=store.get('cr-snd',true),ac,ann;
+try{ann=new Set(JSON.parse(sessionStorage.getItem('cr-j')||'[]'))}catch(e){ann=new Set()}
+
+function say(t){notice.textContent=t;notice.hidden=!t}
+function rich(p,text){
+  text.split(/(https?:\/\/[^\s<]+|`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).forEach((s,k)=>{
+    if(!(k%2)){if(s)p.append(s);return}
+    if(s[0]==='h'){const a=el('a',null,s);a.href=s;a.target='_blank';a.rel='noopener noreferrer';p.append(a)}
+    else if(s[0]==='`')p.append(el('code',null,s.slice(1,-1)));
+    else if(s[1]==='*')p.append(el('strong',null,s.slice(2,-2)));
+    else p.append(el('em',null,s.slice(1,-1)));
+  });
+}
+function ping(){
+  try{
+    ac=ac||new AudioContext();ac.resume();
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.frequency.value=880;g.gain.setValueAtTime(.08,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.25);
+    o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.25);
+  }catch(e){}
+}
+function refreshTitle(){document.title=(unread?'('+unread+') ':'')+'#'+lab(room)+' · Llamaz Chat Rooms'}
+function notify(ev){
+  if(Date.now()-ev.ts>15000||(!document.hidden&&document.hasFocus()))return;
+  unread++;refreshTitle();if(snd)ping();
+}
+
+function drawPeople(){
+  const ppl=new Map(),now=Date.now();
+  msgs.forEach(m=>{if(!isBlocked(m.u,m.ts))ppl.set(m.u,{n:m.n,t:m.ts,v:m.vs===true})});
+  if(name&&room)ppl.set(uid,{n:name,t:now,v:isVer(uid)});
+  $('count').textContent='👥 '+ppl.size;
+  const box=$('plist');box.textContent='';
+  [...ppl].sort((a,b)=>b[1].t-a[1].t).slice(0,40).forEach(([u,p])=>{
+    const on=now-p.t<6e5,r=el('button','pr'+(on?'':' off')),av=avEl(u,p.n,on?'on':'');
+    
+    const sp=el('span'),st=stOf(profiles.get(u)||{});sp.append(el('b',null,u===uid?p.n+' (you)':p.n));if(tags[u]&&p.v)sp.append(tagEl(tags[u].l));if(st)sp.append(el('span','stt',st));r.type='button';r.onclick=()=>card(u,p.n);r.append(av,sp);box.append(r);
+  });
+}
+
+function render(){
+  const end=log.scrollHeight-log.scrollTop-log.clientHeight<80,by=new Map();
+  reacts.forEach((n,k)=>{
+    const [mid,e]=k.split('|');
+    if(!by.has(mid))by.set(mid,new Map());
+    const g=by.get(mid);if(!g.has(e))g.set(e,[]);g.get(e).push(n);
+  });
+  log.textContent='';
+  if(!msgs.length)log.append(el('li','empty',(isDM(room)?'This is the start of your conversation with '+lab(room)+'. Direct messages are encrypted before they leave your device.':srv?'Welcome to #'+lab(room)+'. This is where the conversation starts.':'This is the start of #'+room+'. Share the code “'+room+'” to invite people.')));
+  let prev=null;
+  const qs=($('q').value||'').trim().toLowerCase();msgs.forEach(m=>{if(m.del||isBlocked(m.u,m.ts)||(qs&&(m.k!=='m'||!(m.t+' '+m.n).toLowerCase().includes(qs))))return;
+    const newDay=!prev||new Date(prev.ts).toDateString()!==new Date(m.ts).toDateString();
+    if(newDay)log.append(el('li','day',dayLabel(m.ts)));
+    if(m.k==='j'){log.append(el('li','sys',m.n+' joined the room · '+clock(m.ts)));prev=m;return}
+    const first=newDay||prev.k!=='m'||prev.u!==m.u||m.ts-prev.ts>3e5;
+    const mention=name&&m.u!==uid&&m.t.toLowerCase().includes('@'+name.toLowerCase());
+    const li=el('li','msg'+(first?' first':'')+(m.pending?' pending':'')+(mention?' ment':'')+(m.a?' act':''));
+    if(first){
+      const av=avEl(m.u,m.n);av.onclick=()=>card(m.u,m.n);
+      li.append(av);
+    }else li.append(el('span','tm',clock(m.ts)));
+    const body=el('div');
+    if(first){const h=el('div','head');const nb=el('b','who',m.n),pc2=(profiles.get(m.u)||{}).ac;if(pc2)nb.style.setProperty('--nc',pc2);nb.onclick=()=>card(m.u,m.n);decorate(m,nb,h);h.append(el('time',null,stamp(m.ts)));body.append(h)}
+    if(m.q){const q=el('div','quote');q.append(el('b',null,m.q.n+' '),m.q.t);body.append(q)}
+    const t=el('p','txt');
+    if(m.a)t.append(m.n+' ');
+    rich(t,m.t);if(m.ed)t.append(el('span','ed',' (edited)'));if(m.t||!m.f)body.append(t);if(m.f)body.append(fileEl(m));
+    const g=by.get(m.i);
+    if(g){
+      const r=el('div','rx');
+      g.forEach((names,e)=>{
+        const b=el('button',reacts.has(m.i+'|'+e+'|'+uid)?'me':null,e+' '+names.length);
+        b.type='button';b.title=names.join(', ');
+        b.onclick=ev=>{ev.stopPropagation();react(m.i,e)};r.append(b);
+      });
+      body.append(r);
+    }
+    li.append(body);
+    const tools=el('div','tools');
+    QUICK.forEach(e=>{const b=el('button',null,e);b.type='button';b.setAttribute('aria-label','React '+e);b.onclick=ev=>{ev.stopPropagation();react(m.i,e)};tools.append(b)});
+    const rp=el('button','rp','Reply');rp.type='button';rp.onclick=ev=>{ev.stopPropagation();setReply(m)};tools.append(rp);if(m.u===uid&&!m.pending&&!tags[uid]){const eb=el('button','rp','Edit'),xb=el('button','rp','Delete');eb.type=xb.type='button';eb.onclick=ev=>{ev.stopPropagation();startEdit(m)};xb.onclick=ev=>{ev.stopPropagation();delMsg(m)};tools.append(eb,xb)}
+    if(!isDM(room))li.append(tools);
+    li.onclick=()=>{const was=li.classList.contains('sel');log.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));if(!was)li.classList.add('sel')};
+    log.append(li);prev=m;
+  });
+  const last=msgs[msgs.length-1];
+  if(end||(last&&last.pending)){log.scrollTop=log.scrollHeight;$('jump').hidden=true}else if(msgs.length)$('jump').hidden=false;
+  drawPeople();
+}
+function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;render()})}
+
+function ingest(ev){
+  if(ev.u!==uid&&isBlocked(ev.u,ev.ts))return;const ex=seen.get(ev.i);
+  if(ex){
+    if(ex.pending&&ev.k==='m'){ex.pending=false;ex.ts=ev.ts;if(ev.f)ex.f=ev.f;if(ev.sg)ex.sg=ev.sg;if(tags[ex.u])vfyMsg(ex);msgs.sort((a,b)=>a.ts-b.ts);schedule()}
+    return;
+  }
+  seen.set(ev.i,ev);prof(ev.u,ev.k==='m'?{n:ev.n,ae:ev.ae||undefined,ac:ev.ac||undefined}:Object.assign({n:ev.n},ev.p||{}),ev.ts);if(ev.k==='p'){schedule();return}if(ev.k==='x'||ev.k==='e'){const t=seen.get(ev.m);if(t&&t.k==='m'&&t.u===ev.u&&!tags[t.u]){if(ev.k==='x')t.del=1;else{t.t=ev.t;t.ed=1}}schedule();return}
+  if(ev.k==='r'){
+    const key=ev.m+'|'+ev.e+'|'+ev.u;
+    if(ev.on)reacts.set(key,ev.n);else reacts.delete(key);
+    schedule();return;
+  }
+  msgs.push(ev);msgs.sort((a,b)=>a.ts-b.ts);if(ev.k==='m'&&tags[ev.u]&&!ev.pending)vfyMsg(ev);
+  if(msgs.length>300)msgs.shift();
+  if(ev.k==='m'&&ev.u!==uid&&!ev.pending)notify(ev);
+  schedule();
+}
+
+function setState(live){dot.className='dot'+(live?' live':'');state.textContent=live?'Live':'Connecting…'}
+async function post(o,rm){if(isDM(rm||room))throw 0;if(acct&&(acct.banned||acct.tout>Date.now()))throw 0;
+  const r=await fetch(SERVER+'/'+PREFIX+(rm||room),{method:'POST',body:JSON.stringify(o)});
+  if(!r.ok)throw r.status;
+}
+function announce(){
+  if(!name||!room||ann.has(room)||!es||es.readyState!==1)return;
+  ann.add(room);try{sessionStorage.setItem('cr-j',JSON.stringify([...ann]))}catch(e){}
+  const mine=room;
+  post({k:'j',i:rand(10),u:uid,n:name,p:pub()}).catch(()=>ann.delete(mine));
+}
+
+function connect(){
+  if(es)es.close();
+  const mine=room;
+  setState(false);
+  es=new EventSource(SERVER+'/'+PREFIX+room+'/sse?since=all');
+  es.onopen=()=>{setState(true);announce()};
+  es.onerror=()=>setState(false);
+  es.onmessage=e=>{
+    if(room!==mine)return;
+    let d,m;
+    try{d=JSON.parse(e.data);if(d.event!=='message')return;m=JSON.parse(d.message)}catch(x){return}
+    const q=m.q&&typeof m.q==='object'?{i:String(m.q.i||''),n:String(m.q.n||'').slice(0,24),t:String(m.q.t||'').slice(0,80)}:null;
+    ingest({i:String(m.i||d.id),k:m.k||'m',u:String(m.u||''),n:String(m.n||'Someone').slice(0,24),t:String(m.t||'').slice(0,500),a:m.a?1:0,q:q,ae:S(m.ae,8),ac:C(m.ac),p:P(m.p),f:fileOf(m.f),sg:S(m.sg,120),m:String(m.m||''),e:String(m.e||'').slice(0,8),on:m.on?1:0,ts:(+d.time||0)*1000});
+  };
+}
+
+function drawRooms(){
+  nav.textContent='';
+  const sv=srvOf(srv);
+  (sv?sv.ch.map(c=>sv.id+'-'+c):rooms).forEach(c=>{
+    const row=el('div','rrow'),b=el('button','room'+(c===room?' on':''),'# '+lab(c));
+    b.type='button';
+    b.onclick=()=>{enter(c);app.classList.remove('open')};
+    row.append(b);
+    if(!sv){
+      const x=el('button','rx2','×');
+      x.type='button';x.title='Leave room';x.setAttribute('aria-label','Leave '+c);
+      x.onclick=()=>leaveRoom(c);row.append(x);
+    }
+    nav.append(row);
+  });
+}
+function drawMe(){
+  const b=$('me');b.textContent='';
+  const sp=el('span','mi');
+  sp.append(el('b',null,name||'Profile'),el('span','stt',(acct&&stOf(acct.profile))||'Edit your profile'));
+  b.append(avEl(uid,name),sp);
+}
+function drawSnd(){$('snd').textContent=snd?'🔔 Sound on':'🔕 Sound off'}
+
+function enter(c){
+  c=clean(c||'');
+  if(!c||c===room)return;
+  saveDraft();room=c;const sv=(acct.servers||[]).find(x=>c.startsWith(x.id+'-'));srv=sv?sv.id:'';if(sv){sv.cur=c.slice(sv.id.length+1);saveAcct()}
+  if(!sv&&!isDM(c)){rooms=[c].concat(rooms.filter(r=>r!==c)).slice(0,8);store.set('cr-rooms',rooms)}
+  if(location.hash.slice(1)!==c)location.hash=c;
+  msgs=[];seen=new Map();reacts=new Map();unread=0;say('');setReply(null);editing=null;msg.value=drafts[c]||'';fit();$('q').value='';
+  title.textContent=isDM(c)?'@ '+dmName(c):'# '+lab(c);refreshTitle();msg.placeholder=isDM(c)?'Message '+dmName(c):'Message #'+lab(c);
+  drawRail();drawSide();connectMeta();if(isDM(c)){if(es)es.close();es=null;setState(true);loadDM(c.slice(3))}else connect();render();
+}
+
+function fit(){msg.style.height='auto';msg.style.height=Math.min(msg.scrollHeight,140)+'px'}
+function setReply(m){
+  if(m)stopEdit();reply=m?{i:m.i,n:m.n,t:(m.t||(m.f?'📎 '+m.f.n:'')).slice(0,80)}:null;
+  bar.hidden=!reply;
+  if(reply){$('rt').textContent='Replying to '+reply.n+': '+reply.t;msg.focus()}
+}
+function setName(v){
+  v=String(v).trim().slice(0,24);
+  if(!v)return;
+  if(badName(v)&&!tags[uid]){say('That display name is reserved.');return}saveProfile(Object.assign({},acct.profile,{n:v}));
+}
+
+function react(mid,e){
+  if(!name){askName();return}
+  const key=mid+'|'+e+'|'+uid,on=!reacts.has(key),i=rand(10);
+  ingest({i:i,k:'r',u:uid,n:name,m:mid,e:e,on:on?1:0,ts:Date.now()});
+  post({k:'r',i:i,u:uid,n:name,m:mid,e:e,on:on?1:0}).catch(x=>{
+    if(on)reacts.delete(key);else reacts.set(key,name);
+    schedule();say(why(x));
+  });
+}
+
+async function send(){
+  if(isDM(room)){sendDM();return}const raw=msg.value;
+  let t=raw.trim().slice(0,500),a=0;
+  if(!t||!room)return;
+  if(t.startsWith('/nick ')){setName(t.slice(6));msg.value='';fit();return}
+  if(t.startsWith('/me ')){a=1;t=t.slice(4).trim()}
+  else if(t==='/shrug'||t.startsWith('/shrug ')){t=(t.slice(6).trim()+' ¯\\_(ツ)_/¯').trim()}
+  if(!t)return;
+  if(!name){askName();return}
+  if(editing){const em=editing;editing=null;bar.hidden=true;msg.value='';fit();if(t===em.t)return;const ei=rand(10),old=em.t;ingest({i:ei,k:'e',u:uid,n:name,m:em.i,t:t,ts:Date.now()});post({k:'e',i:ei,u:uid,n:name,m:em.i,t:t}).catch(x=>{em.t=old;em.ed=0;schedule();say(why(x))});return}
+  const i=rand(10),q=reply,m={i:i,k:'m',u:uid,n:name,t:t,a:a,q:q,ts:Date.now(),pending:true};
+  msg.value='';fit();say('');setReply(null);saveDraft();ingest(m);
+  try{try{await keys();m.sg=await signMsg(['m',room,i,uid,t,a?1:0,''].join('|'))}catch(e0){}if(tags[uid])vfyMsg(m);await post({k:'m',i:i,u:uid,n:name,ae:acct.profile.ae,ac:acct.profile.ac,t:t,a:a,q:q,sg:m.sg})}
+  catch(e){msgs=msgs.filter(x=>x!==m);seen.delete(i);msg.value=raw;fit();schedule();say(why(e))}
+}
+
+function askName(){openProfile()}
+$('nameF').addEventListener('submit',e=>{
+  e.preventDefault();
+  setName(nm.value);
+  if(name){nameD.close();msg.focus()}
+});
+nameD.addEventListener('cancel',e=>{if(!name)e.preventDefault()});
+$('me').onclick=askName;
+$('snd').onclick=()=>{snd=!snd;store.set('cr-snd',snd);drawSnd()};
+
+$('joinF').addEventListener('submit',e=>{e.preventDefault();enter($('code').value);$('code').value='';app.classList.remove('open')});
+$('newBtn').onclick=()=>{enter(rand(12));app.classList.remove('open')};
+$('menu').onclick=()=>app.classList.add('open');
+$('scrim').onclick=()=>app.classList.remove('open');
+window.addEventListener('hashchange',()=>{if(acct)route(location.hash.slice(1))});
+const seenNow=()=>{unread=0;refreshTitle()};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)seenNow()});
+window.addEventListener('focus',seenNow);
+
+const web=/^https?:$/.test(location.protocol);
+invite.textContent=web?'Copy invite link':'Copy room code';
+invite.onclick=async()=>{
+  const text=srv?inviteText():web?location.href.split('#')[0]+'#'+room:room;
+  try{await navigator.clipboard.writeText(text);invite.textContent='Copied';setTimeout(()=>{invite.textContent=web?'Copy invite link':'Copy room code'},1500)}
+  catch(e){prompt('Copy this:',text)}
+};
+
+$('compose').addEventListener('submit',e=>{e.preventDefault();send()});
+msg.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}else if(e.key==='ArrowUp'&&!msg.value){const l=msgs.filter(x=>x.u===uid&&x.k==='m'&&!x.del&&!x.pending&&!tags[uid]).pop();if(l){e.preventDefault();startEdit(l)}}});
+msg.addEventListener('input',fit);
+$('rc').onclick=()=>{stopEdit();setReply(null)};
+$('emojiBtn').onclick=e=>{e.stopPropagation();emojis.hidden=!emojis.hidden};
+document.addEventListener('click',e=>{if(!emojis.contains(e.target))emojis.hidden=true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){emojis.hidden=true;stopEdit();setReply(null)}});
+EMOJI.forEach(e=>{
+  const b=el('button',null,e);b.type='button';b.setAttribute('aria-label','Insert '+e);
+  b.onclick=()=>{msg.setRangeText(e,msg.selectionStart,msg.selectionEnd,'end');emojis.hidden=true;msg.focus();fit()};
+  emojis.append(b);
+});
+setInterval(drawPeople,6e4);
+
+const S=(v,n)=>String(v==null?'':v).slice(0,n),C=v=>/^#[0-9a-f]{6}$/i.test(v)?v:'';
+const P=p=>p&&typeof p==='object'?{ae:S(p.ae,8),ac:C(p.ac),pr:S(p.pr,20),st:S(p.st,40),bc:C(p.bc),im:IM(p.im),sx:+p.sx||0,tg:S(p.tg,80),bio:S(p.bio,160)}:null;
+const pub=()=>{const p=acct.profile;return{ae:p.ae,ac:p.ac,bc:p.bc||'',im:p.im||'',pr:p.pr,st:p.st,sx:p.sx||0,tg:p.tg||'',bio:p.bio}};
+// Accounts live in this browser only (no server): passwords are salted and hashed, never stored as typed.
+const getA=()=>store.get('llz-accts',{}),putA=o=>store.set('llz-accts',o);
+const profD=$('profD'),cardD=$('cardD'),SW=['#E5484D','#E5871B','#C99A06','#2FA66A','#0E9AA7','#3E7BFA','#8E4EC6','#D6409F'];
+let mode='login',pe='',pc='',pb='',pi='',editing=null;
+const drafts=store.get('cr-drafts',{});
+const stOf=p=>p.st&&(!p.sx||p.sx>Date.now())?p.st:'',tagStr=v=>v.split(',').map(x=>x.trim().slice(0,16)).filter(Boolean).slice(0,5).join(', ');
+
+function prof(u,p,ts){
+  if(u===uid)return;
+  const o=profiles.get(u)||{};
+  if(ts<(o.ts||0))return;
+  Object.keys(p).forEach(k=>{if(p[k]!=null)o[k]=p[k]});
+  o.ts=ts;profiles.set(u,o);
+}
+function avEl(u,n,cls){
+  const p=profiles.get(u)||{},a=el('div','av'+(cls?' '+cls:''),p.im?'':(p.ae||initial(p.n||n)));
+  a.style.background=p.im?'center/cover url('+p.im+')':(p.ac||'hsl('+hue(u||n)+' 48% 40%)');return a;
+}
+function syncMe(){profiles.set(uid,Object.assign({},acct.profile,{ts:Date.now()}))}
+function saveProfile(p){
+  acct.profile=p;name=p.n;
+  const all=getA();all[acct.un]=acct;putA(all);
+  syncMe();drawMe();schedule();
+  if(es&&es.readyState===1)post({k:'p',i:rand(10),u:uid,n:name,p:pub()}).catch(x=>say(why(x)));
+}
+
+async function hashPw(pw,salt){
+  const enc=new TextEncoder();
+  if(window.crypto&&crypto.subtle){
+    const k=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
+    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:enc.encode(salt),iterations:100000},k,256);
+    return btoa(String.fromCharCode(...new Uint8Array(bits)));
+  }
+  let h=5381;for(const c of salt+pw)h=((h<<5)+h+c.charCodeAt(0))|0;
+  return 'x'+h;
+}
+function authMode(m){
+  mode=m;
+  $('tLogin').classList.toggle('on',m==='login');$('tSign').classList.toggle('on',m==='sign');
+  $('cw').hidden=m==='login';$('ap2').required=m==='sign';
+  $('asub').textContent=m==='login'?'Log in':'Create account';
+  $('ap').autocomplete=m==='login'?'current-password':'new-password';
+  $('aerr').hidden=true;
+}
+function showAuth(){app.hidden=true;$('auth').hidden=false;authMode('login');$('au').focus()}
+function login(un,isNew,fresh){
+  acct=getA()[un];acct.un=un;acct.servers=acct.servers||[];acct.friends=acct.friends||{};acct.req=acct.req||{};acct.out=acct.out||{};acct.blocked=acct.blocked||[];acct.dms=acct.dms||{};acct.seenIn=acct.seenIn||[];
+  store.set('llz-session',un);
+  if(fresh){ann.clear();try{sessionStorage.removeItem('cr-j')}catch(e){}}
+  uid=acct.uid;name=acct.profile.n;syncMe();
+  $('auth').hidden=true;app.hidden=false;$('authF').reset();keys().then(()=>{connectInbox();drawFriends()});connectBans();{const st=selfState()||(acct.banned?{ban:1}:acct.tout>Date.now()?{until:acct.tout}:null);if(st){acct.banned=st.ban?1:0;acct.tout=st.until||0;saveAcct();lockBanned(st);return}else if(acct.tout){acct.tout=0;saveAcct()}}
+  drawMe();
+  const h=location.hash.slice(1);
+  if(h.startsWith('join=')){const r=joinInv(h.slice(5));if(r){enter(rooms[0]||rand(8));say(r)}}
+  else enter(h||rooms[0]||rand(8));
+  if(isNew)openProfile();
+}
+function logout(){
+  if(es)es.close();
+  if(ies)ies.close();ies=null;kpU='';if(mes)mes.close();mes=null;mfor='';srv='';es=null;room='';msgs=[];seen=new Map();reacts=new Map();acct=null;uid='';name='';
+  [profD,cardD].forEach(d=>{if(d.open)d.close()});
+  if(bES)bES.close();bES=null;$('banned').hidden=true;store.set('llz-session','');setReply(null);showAuth();
+}
+
+function pSel(){
+  const d='hsl('+hue(uid)+' 48% 40%)',pv=$('pav'),n=$('pn').value||name;
+  pv.textContent=pi?'':(pe||initial(n));
+  pv.style.background=pi?'center/cover url('+pi+')':(pc||d);
+  $('pban').style.background=pb||pc||d;
+  $('pnm2').textContent=n;
+  $('ppr2').textContent=$('ppr').value;
+  $('pst2').textContent=$('pst').value;
+  $('pbio2').textContent=$('pbio').value;
+  $('bcnt').textContent=$('pbio').value.length+'/160';
+  const tg=$('ptg2');tg.textContent='';
+  tagStr($('ptg').value).split(', ').filter(Boolean).forEach(t=>tg.append(el('span','tag',t)));
+  $('prm').hidden=!pi;
+  $('pem').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',!pi&&b.textContent===pe));
+  $('psw').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b.dataset.c===pc));
+}
+function openProfile(){
+  const p=acct.profile;
+  pe=p.ae;pc=p.ac;pb=p.bc||'';pi=p.im||'';
+  $('pn').value=p.n;$('ppr').value=p.pr;$('pst').value=p.st;$('pbio').value=p.bio;$('ptg').value=p.tg||'';$('psx').value='k';
+  if(pc)$('pcc').value=pc;
+  if(pb)$('pbc').value=pb;
+  pTab(0);pSel();if(!profD.open)profD.showModal();$('pn').focus();
+}
+function card(u,n){
+  const me=u===uid,p=profiles.get(u)||{},d='hsl('+hue(u||n)+' 48% 40%)',st=stOf(p);
+  $('cban').style.background=p.bc||p.ac||d;
+  const c=$('cav');c.textContent='';c.append(avEl(u,n,'big'));
+  $('cnm').textContent=p.n||n;{const ct=$('ctag');ct.textContent='';ct.hidden=!isVer(u);if(isVer(u))ct.append(tagEl(tags[u].l))}
+  $('cpr').textContent=p.pr||'';$('cpr').hidden=!p.pr;
+  $('cst').textContent=st;$('cst').hidden=!st;
+  const tg=$('ctg');tg.textContent='';
+  (p.tg?p.tg.split(',').map(x=>x.trim()).filter(Boolean).slice(0,5):[]).forEach(t=>tg.append(el('span','tag',t)));
+  tg.hidden=!tg.childNodes.length;
+  $('cbio').textContent=p.bio||(me?'Add a bio with Edit profile.':'No profile info shared yet.');
+  const last=msgs.filter(m=>m.u===u&&m.k==='m'&&!m.del).pop();
+  $('cseen').textContent=last?'Last message '+stamp(last.ts):'';
+  const b=$('cact');b.textContent=me?'Edit profile':'Mention';
+  b.onclick=()=>{
+    cardD.close();
+    if(me)openProfile();
+    else{msg.value+=(msg.value&&!/\s$/.test(msg.value)?' ':'')+'@'+(p.n||n)+' ';fit();msg.focus()}
+  };
+  drawCx(u,p.n||n);if(!cardD.open)cardD.showModal();
+}
+
+$('tLogin').onclick=()=>authMode('login');$('tSign').onclick=()=>authMode('sign');
+$('authF').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const un=$('au').value.trim().toLowerCase(),pw=$('ap').value,all=getA();
+  const err=t=>{$('aerr').textContent=t;$('aerr').hidden=false;$('aerr').style.color=''};
+  if(!/^[a-z0-9_]{3,20}$/.test(un)||un==='__proto__')return err('Usernames use 3–20 letters, numbers or underscores.');
+  if(un==='_llamaz_'||(mode==='sign'&&badName(un)))return err('That name is reserved.');
+  if(mode==='sign'){
+    if(all[un])return err('That username is already taken on this device. Pick another or log in.');
+    if(pw.length<8)return err('Use a password with at least 8 characters.');
+    if(pw!==$('ap2').value)return err('The passwords don’t match.');
+    const salt=rand(16);
+    all[un]={uid:rand(12),salt:salt,hash:await hashPw(pw,salt),profile:{n:un,ae:'',ac:'',pr:'',st:'',bio:''}};
+    putA(all);login(un,true,true);
+  }else{
+    const a=all[un];
+    if(!a||a.hash!==await hashPw(pw,a.salt))return err('Wrong username or password.');
+    login(un,false,true);
+  }
+});
+$('out').onclick=logout;
+$('pn').addEventListener('input',pSel);
+$('pcan').onclick=()=>profD.close();$('ccl').onclick=()=>cardD.close();
+$('profF').addEventListener('submit',e=>{
+  e.preventDefault();
+  const n=$('pn').value.trim().slice(0,24);
+  if(!n){pTab(1);$('pn').focus();return}
+  if(badName(n)&&!tags[uid]){alert('That display name is reserved so nobody can pose as staff. Pick another.');pTab(1);$('pn').focus();return}
+  const k=$('psx').value,sx=k==='k'?(acct.profile.sx||0):k==='0'?0:k==='d'?new Date().setHours(23,59,59,999):Date.now()+(+k)*36e5;
+  saveProfile({n:n,ae:pe,ac:pc,bc:pb,im:pi,pr:$('ppr').value.trim().slice(0,20),st:$('pst').value.trim().slice(0,40),sx:sx,tg:tagStr($('ptg').value),bio:$('pbio').value.trim().slice(0,160)});
+  profD.close();
+});
+EMOJI.forEach(e=>{const b=el('button',null,e);b.type='button';b.setAttribute('aria-label','Avatar '+e);b.onclick=()=>{pe=pe===e?'':e;pi='';pSel()};$('pem').append(b)});
+SW.forEach(c=>{const b=el('button');b.type='button';b.dataset.c=c;b.style.background=c;b.setAttribute('aria-label','Color '+c);b.onclick=()=>{pc=pc===c?'':c;pSel()};$('psw').append(b)});
+
+drawSnd();
+function saveDraft(){if(room&&!editing){drafts[room]=msg.value;store.set('cr-drafts',drafts)}}
+function stopEdit(){if(editing){editing=null;msg.value='';fit()}}
+function startEdit(m){editing=m;setReply(null);msg.value=m.t;fit();$('rt').textContent='Editing your message. Press Esc to cancel.';bar.hidden=false;msg.focus()}
+function delMsg(m){
+  if(!confirm('Delete this message for everyone?'))return;
+  const i=rand(10);
+  ingest({i:i,k:'x',u:uid,n:name,m:m.i,ts:Date.now()});
+  post({k:'x',i:i,u:uid,n:name,m:m.i}).catch(x=>{m.del=0;schedule();say(why(x))});
+}
+function leaveRoom(c){
+  rooms=rooms.filter(r=>r!==c);store.set('cr-rooms',rooms);delete drafts[c];store.set('cr-drafts',drafts);
+  if(c===room){room='';enter(rooms[0]||rand(8))}else drawRooms();
+}
+msg.addEventListener('input',saveDraft);
+$('q').addEventListener('input',schedule);
+$('jump').onclick=()=>{log.scrollTop=log.scrollHeight;$('jump').hidden=true};
+log.addEventListener('scroll',()=>{if(log.scrollHeight-log.scrollTop-log.clientHeight<80)$('jump').hidden=true});
+$('pcc').oninput=e=>{pc=e.target.value;pSel()};
+$('pbc').oninput=e=>{pb=e.target.value;pSel()};
+$('pbx').onclick=()=>{pb='';pSel()};
+$('pst').addEventListener('input',pSel);
+$('pexp').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({llamaz:1,un:acct.un,acct:acct})],{type:'application/json'}));
+  a.download='llamaz-'+acct.un+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$('imp').onclick=()=>$('impf').click();
+$('impf').onchange=async()=>{
+  const f=$('impf').files[0];$('impf').value='';
+  const note=(t,ok)=>{const e=$('aerr');e.textContent=t;e.hidden=false;e.style.color=ok?'var(--muted)':''};
+  if(!f)return;
+  try{
+    const d=JSON.parse(await f.text()),a=d.acct,un=String(d.un||'');
+    if(!d.llamaz||!/^[a-z0-9_]{3,20}$/.test(un)||un==='__proto__'||un==='_llamaz_'||!a||!a.uid||!a.salt||!a.hash||!a.profile)throw 0;
+    const all=getA(),q=a.profile;
+    if(all[un])return note('That username already exists on this device. Log in with it instead.');
+    all[un]={uid:S(a.uid,24),salt:S(a.salt,40),hash:S(a.hash,100),servers:(Array.isArray(a.servers)?a.servers:[]).map(cleanSrv).filter(Boolean).slice(0,20),friends:cleanF(a.friends),blocked:(Array.isArray(a.blocked)?a.blocked:[]).map(x=>S(x,24)).slice(0,500),sk:cleanSk(a.sk),pk:cleanPk(a.pk),sg:cleanSg(a.sg),sp:cleanPk(a.sp),profile:{n:S(q.n,24)||un,ae:S(q.ae,8),ac:C(q.ac),bc:C(q.bc),im:IM(q.im),pr:S(q.pr,20),st:S(q.st,40),sx:+q.sx||0,tg:S(q.tg,80),bio:S(q.bio,160)}};
+    putA(all);authMode('login');$('au').value=un;$('ap').focus();
+    note('Account imported. Enter your password to log in.',true);
+  }catch(e){note('That file isn’t a Llamaz account export.')}
+};
+let srv='',mes=null,mfor='';
+const srvOf=id=>(acct&&acct.servers||[]).find(x=>x.id===id);
+const lab=c=>{if(isDM(c))return dmName(c);const s=(acct&&acct.servers||[]).find(x=>c.startsWith(x.id+'-'));return s?c.slice(s.id.length+1):c};
+const srvD=$('srvD'),smD=$('smD'),serr=t=>{$('serr').textContent=t;$('serr').hidden=false};
+const enc=o=>btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+function saveAcct(){const all=getA();all[acct.un]=acct;putA(all)}
+function cleanSrv(o){
+  if(!o||typeof o!=='object')return null;
+  const id=String(o.id||o.i||''),raw=o.ch||o.c;
+  if(!/^[a-z0-9]{8}$/.test(id)||!Array.isArray(raw))return null;
+  const ch=[...new Set(raw.map(c=>clean(String(c)).slice(0,24)).filter(Boolean))].slice(0,20);
+  if(!ch.length)return null;
+  return{id:id,n:S(o.n,30)||'Server',ae:S(o.ae||o.a,8),ch:ch,cur:ch.includes(o.cur)?o.cur:ch[0]};
+}
+function inviteText(){const s=srvOf(srv);return(web?location.href.split('#')[0]+'#join=':'')+enc({i:s.id,n:s.n,a:s.ae,c:s.ch})}
+function postMeta(s){fetch(SERVER+'/'+PREFIX+s.id+'_meta',{method:'POST',body:JSON.stringify({k:'s',c:s.ch})}).catch(()=>{})}
+function connectMeta(){
+  if(mfor===srv)return;
+  if(mes)mes.close();
+  mes=null;mfor=srv;
+  if(!srv)return;
+  const sid=srv;
+  mes=new EventSource(SERVER+'/'+PREFIX+sid+'_meta/sse?since=all');
+  mes.onmessage=e=>{
+    try{
+      const d=JSON.parse(e.data);
+      if(d.event!=='message')return;
+      const m=JSON.parse(d.message),s=srvOf(sid);
+      if(m.k!=='s'||!s||!Array.isArray(m.c))return;
+      let add=false;
+      m.c.slice(0,20).forEach(c=>{c=clean(String(c)).slice(0,24);if(c&&!s.ch.includes(c)&&s.ch.length<20){s.ch.push(c);add=true}});
+      if(add){saveAcct();if(srv===sid)drawSide()}
+    }catch(x){}
+  };
+}
+function drawRail(){
+  const r=$('rail');r.textContent='';
+  const h=el('button','srv'+(srv?'':' on'),'🦙');
+  h.type='button';h.title='Home: direct rooms';h.onclick=goHome;
+  r.append(h,el('div','sep'));
+  acct.servers.forEach(s=>{
+    const b=el('button','srv'+(s.id===srv?' on':''),s.ae||initial(s.n));
+    b.type='button';b.title=s.n;b.style.background='hsl('+hue(s.id)+' 48% 40%)';
+    b.onclick=()=>{enter(s.id+'-'+s.cur);app.classList.remove('open')};
+    r.append(b);
+  });
+  const a=el('button','srv add','+');
+  a.type='button';a.title='Add a server';a.onclick=()=>{$('serr').hidden=true;srvD.showModal()};
+  r.append(a);
+}
+function drawSide(){
+  const s=srvOf(srv);
+  $('sname').textContent=s?s.n+' ▾':'🦙 Llamaz Chat Rooms';
+  $('slab').textContent=s?'Text channels':'Direct rooms';
+  $('addch').hidden=!s;
+  ['joinF','newBtn','hint1'].forEach(id=>{$(id).hidden=!!s});
+  drawRooms();
+}
+function goHome(){enter(rooms[0]||rand(8));app.classList.remove('open')}
+function route(h){if(h.startsWith('join=')){const r=joinInv(h.slice(5));if(r)say(r)}else enter(h)}
+function joinInv(t){
+  try{
+    t=String(t).trim();
+    const k=t.indexOf('join=');if(k>=0)t=t.slice(k+5);
+    const s=cleanSrv(JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(t.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)))));
+    if(!s)return 'That invite doesn’t look right.';
+    let m=srvOf(s.id);
+    if(m){s.ch.forEach(c=>{if(!m.ch.includes(c)&&m.ch.length<20)m.ch.push(c)})}
+    else{if(acct.servers.length>=20)return 'You can be in up to 20 servers.';acct.servers.push(s);m=s}
+    saveAcct();postMeta(m);enter(m.id+'-'+m.cur);
+    return '';
+  }catch(e){return 'That invite doesn’t look right.'}
+}
+function addChannel(){
+  const s=srvOf(srv);if(!s)return;
+  const n=clean(prompt('Name your new channel')||'').slice(0,24);
+  if(!n)return;
+  if(s.ch.includes(n)){enter(s.id+'-'+n);return}
+  if(s.ch.length>=20){say('A server can have up to 20 channels.');return}
+  s.ch.push(n);saveAcct();postMeta(s);enter(s.id+'-'+n);
+}
+$('sname').onclick=()=>{const s=srvOf(srv);if(s){$('smT').textContent=s.n;smD.showModal()}};
+$('addch').onclick=addChannel;
+$('smAdd').onclick=()=>{smD.close();addChannel()};
+$('smX').onclick=()=>smD.close();
+$('smInv').onclick=async()=>{
+  const t=inviteText();smD.close();
+  try{await navigator.clipboard.writeText(t);say('Invite copied. Anyone who opens it can join this server.')}
+  catch(e){prompt('Copy this invite:',t)}
+};
+$('smLv').onclick=()=>{
+  const s=srvOf(srv);
+  if(!s||!confirm('Leave '+s.n+'? You can rejoin later with an invite.'))return;
+  acct.servers=acct.servers.filter(x=>x.id!==s.id);saveAcct();smD.close();goHome();
+};
+$('scl').onclick=()=>srvD.close();
+$('srvNew').addEventListener('submit',e=>{
+  e.preventDefault();
+  const n=S($('sn').value.trim(),30);
+  if(!n)return;
+  if(acct.servers.length>=20)return serr('You can be in up to 20 servers.');
+  const s={id:rand(8),n:n,ae:S($('si').value.trim(),8),ch:['general','random'],cur:'general'};
+  acct.servers.push(s);saveAcct();postMeta(s);
+  srvD.close();$('sn').value=$('si').value='';enter(s.id+'-general');
+});
+$('srvJoin').addEventListener('submit',e=>{
+  e.preventDefault();
+  const r=joinInv($('sj').value);
+  if(r)return serr(r);
+  srvD.close();$('sj').value='';
+});
+const IM=v=>/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]{20,2400}$/.test(v)?v:'';
+const fileOf=a=>a&&typeof a==='object'&&String(a.u||'').startsWith(SERVER+'/file/')?{n:S(a.n,80),y:S(a.y,60),z:+a.z||0,x:+a.x||0,u:String(a.u).slice(0,200)}:null;
+const fmtSize=n=>n<1024?n+' B':n<1048576?Math.round(n/1024)+' KB':(n/1048576).toFixed(1)+' MB';
+const MAXF=15*1024*1024;
+function fileEl(m){
+  const f=m.f,w=el('div','file'),src=f.u||f.local,gone=f.x&&f.x<Date.now();
+  if(!gone&&src&&/^image\/(png|jpe?g|gif|webp)$/.test(f.y)){
+    const a=el('a'),im=el('img');
+    a.href=src;a.target='_blank';a.rel='noopener noreferrer';
+    im.src=src;im.alt=f.n;im.loading='lazy';a.append(im);w.append(a);
+  }else{
+    const c=el(gone||!src?'span':'a','fchip','📄 '+f.n);
+    if(!gone&&src){c.href=src;c.target='_blank';c.rel='noopener noreferrer';c.download=f.n}
+    w.append(c);
+  }
+  w.append(el('div','fmeta',f.n+' · '+fmtSize(f.z)+(m.pending?' · uploading…':gone?' · expired':f.x?' · available until '+clock(f.x):'')));
+  return w;
+}
+async function sendFile(f,cap){
+  if(!room||!acct)return;if(isDM(room)){say('Files can’t be sent in direct messages yet.');return}
+  if(f.size>MAXF){say('Files can be up to 15 MB.');return}
+  const rm=room,i=rand(10),m={i:i,k:'m',u:uid,n:name,t:cap||'',ts:Date.now(),pending:true,f:{n:f.name.slice(0,80),y:f.type,z:f.size,x:0,u:'',local:URL.createObjectURL(f)}};
+  ingest(m);
+  try{
+    const r=await fetch(SERVER+'/'+PREFIX+rm+'?filename='+encodeURIComponent(f.name),{method:'POST',body:new Blob([f],{type:'text/plain'})});
+    if(!r.ok)throw r.status;
+    const a=(await r.json()).attachment;
+    if(!a||!a.url)throw 0;
+    await post({k:'m',i:i,u:uid,n:name,ae:acct.profile.ae,ac:acct.profile.ac,t:cap||'',sg:await trySign(['m',rm,i,uid,cap||'',0,a.url].join('|')),f:{n:S(a.name,80),y:S(a.type,60),z:+a.size||f.size,x:(+a.expires||0)*1000,u:a.url}},rm);
+  }catch(e){
+    msgs=msgs.filter(x=>x!==m);seen.delete(i);schedule();
+    say(e===429?'The free relay is rate-limiting uploads. Wait a moment and try again.':e===413?'That file is too large for the relay.':'Couldn’t upload that file. Check your connection and try again.');
+  }
+}
+function attach(files){
+  const fs=[...files].slice(0,3);
+  if(!fs.length)return;
+  const cap=msg.value.trim().slice(0,200);
+  if(cap){msg.value='';fit();saveDraft()}
+  fs.forEach((f,k)=>sendFile(f,k?'':cap));
+}
+$('attBtn').onclick=()=>$('fup').click();
+$('fup').onchange=e=>{attach(e.target.files);e.target.value=''};
+msg.addEventListener('paste',e=>{const fs=[...(e.clipboardData&&e.clipboardData.files||[])];if(fs.length){e.preventDefault();attach(fs)}});
+const mainEl=document.querySelector('main'),hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes('Files');
+['dragenter','dragover'].forEach(t=>mainEl.addEventListener(t,e=>{if(hasFiles(e)){e.preventDefault();mainEl.classList.add('drag')}}));
+mainEl.addEventListener('dragleave',()=>mainEl.classList.remove('drag'));
+mainEl.addEventListener('drop',e=>{mainEl.classList.remove('drag');if(hasFiles(e)){e.preventDefault();attach(e.dataTransfer.files)}});
+
+function pTab(k){
+  document.querySelectorAll('#profF .ptabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===k));
+  document.querySelectorAll('#profF .pane').forEach(p=>{p.hidden=+p.dataset.p!==k});
+}
+function readPhoto(f){
+  if(!f||!/^image\//.test(f.type))return;
+  const img=new Image(),u=URL.createObjectURL(f);
+  img.onload=()=>{
+    const s=Math.min(img.width,img.height);let d='';
+    for(const z of [64,48,32]){
+      const c=document.createElement('canvas');c.width=c.height=z;
+      c.getContext('2d').drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,z,z);
+      for(let q=.7;q>.15;q-=.15){d=c.toDataURL('image/jpeg',q);if(d.length<=2400)break}
+      if(d.length<=2400)break;
+    }
+    URL.revokeObjectURL(u);pi=d;pSel();
+  };
+  img.onerror=()=>URL.revokeObjectURL(u);
+  img.src=u;
+}
+document.querySelectorAll('#profF .ptabs button').forEach(b=>{b.onclick=()=>pTab(+b.dataset.t)});
+$('pup').onclick=()=>$('pfile').click();
+$('pfile').onchange=e=>{readPhoto(e.target.files[0]);e.target.value=''};
+$('prm').onclick=()=>{pi='';pSel()};
+$('prnd').onclick=()=>{pi='';pe=EMOJI[Math.floor(Math.random()*EMOJI.length)];pc=SW[Math.floor(Math.random()*SW.length)];pb='';pSel()};
+['ppr','pbio','ptg'].forEach(id=>$(id).addEventListener('input',pSel));
+['🎮 Gaming','💼 Working','😴 Away','🍕 Eating','🎧 Listening to music','📚 Studying','🌴 On vacation'].forEach(t=>{
+  const b=el('button',null,t);b.type='button';b.onclick=()=>{$('pst').value=t;pSel()};$('pre').append(b);
+});
+const b64=u=>btoa(String.fromCharCode(...u)),unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const ECDH={name:'ECDH',namedCurve:'P-256'},sub=crypto.subtle;
+async function gz(str){const w=new CompressionStream('gzip'),x=w.writable.getWriter();x.write(new TextEncoder().encode(str));x.close();return new Uint8Array(await new Response(w.readable).arrayBuffer())}
+async function gunz(buf){const w=new DecompressionStream('gzip'),x=w.writable.getWriter();x.write(buf);x.close();return new TextDecoder().decode(await new Response(w.readable).arrayBuffer())}
+async function encFor(pk,obj){
+  const eph=await sub.generateKey(ECDH,true,['deriveKey']);
+  const pub=await sub.importKey('jwk',{kty:'EC',crv:'P-256',x:pk.x,y:pk.y,ext:true},ECDH,false,[]);
+  const key=await sub.deriveKey({name:'ECDH',public:pub},eph.privateKey,{name:'AES-GCM',length:256},false,['encrypt']);
+  const iv=crypto.getRandomValues(new Uint8Array(12)),ej=await sub.exportKey('jwk',eph.publicKey);
+  const ct=new Uint8Array(await sub.encrypt({name:'AES-GCM',iv:iv},key,await gz(JSON.stringify(obj))));
+  return{e:{x:ej.x,y:ej.y},v:b64(iv),c:b64(ct)};
+}
+async function decWith(sk,p){
+  const priv=await sub.importKey('jwk',sk,ECDH,false,['deriveKey']);
+  const pub=await sub.importKey('jwk',{kty:'EC',crv:'P-256',x:p.e.x,y:p.e.y,ext:true},ECDH,false,[]);
+  const key=await sub.deriveKey({name:'ECDH',public:pub},priv,{name:'AES-GCM',length:256},false,['decrypt']);
+  return JSON.parse(await gunz(new Uint8Array(await sub.decrypt({name:'AES-GCM',iv:unb64(p.v)},key,unb64(p.c)))));
+}
+async function pwKey(pw,salt){
+  const k=await sub.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  return sub.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:salt,iterations:150000},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function seal(key,obj){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  return{v:b64(iv),c:b64(new Uint8Array(await sub.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(JSON.stringify(obj)))))};
+}
+async function unseal(key,o){return JSON.parse(new TextDecoder().decode(await sub.decrypt({name:'AES-GCM',iv:unb64(o.v)},key,unb64(o.c))))}
+
+let ies=null,own=null,rES=null,repU=null,kpP=null,kpU='';
+const rparts=new Map(),unreadDM={};
+const frD=$('frD'),repD=$('repD'),ownD=$('ownD'),repV=$('repV');
+const isBlocked=(u,ts)=>!!u&&(bans.has(u)||tOut(u,ts)||(!!acct&&acct.blocked.includes(u)));
+const isDM=c=>c.startsWith('dm-');
+const dmName=c=>{const f=acct&&acct.friends[c.slice(3)];return f?f.n:'Unknown'};
+const cleanPk=p=>p&&typeof p.x==='string'&&typeof p.y==='string'?{x:S(p.x,60),y:S(p.y,60)}:null;
+const cleanF=o=>{const r={};if(o&&typeof o==='object')Object.keys(o).slice(0,500).forEach(u=>{const f=o[u],pk=f&&cleanPk(f.pk);if(pk)r[S(u,24)]={n:S(f.n,24)||'Friend',pk:pk}});return r};
+const cleanSk=k=>k&&typeof k==='object'&&k.kty==='EC'&&k.crv==='P-256'&&k.d&&k.x&&k.y?{kty:'EC',crv:'P-256',d:S(k.d,60),x:S(k.x,60),y:S(k.y,60),ext:true,key_ops:['deriveKey']}:null;
+const RT=()=>PREFIX+'r-'+ADMIN_PUB.x.slice(0,20).replace(/[^A-Za-z0-9_-]/g,'');
+const clampM=a=>(Array.isArray(a)?a:[]).slice(-300).map(m=>({u:S(m&&m.u,24),n:S(m&&m.n,24),t:S(m&&m.t,500),ts:+(m&&m.ts)||0}));
+const clampRep=r=>({r:S(r.r,16),ts:+r.ts||Date.now(),from:{u:S(r.from.u,24),n:S(r.from.n,24)},about:{u:S(r.about.u,24),n:S(r.about.n,24)},why:S(r.why,40),note:S(r.note,300),where:S(r.where,30),ch:clampM(r.ch),dm:clampM(r.dm)});
+
+function keys(){
+  if(kpU!==acct.un||!kpP){
+    kpU=acct.un;
+    kpP=(async()=>{
+      let ch=false;
+      if(!(acct.sk&&acct.pk)){
+        const kp=await sub.generateKey(ECDH,true,['deriveKey']),j=await sub.exportKey('jwk',kp.publicKey);
+        acct.sk=await sub.exportKey('jwk',kp.privateKey);acct.pk={x:j.x,y:j.y};ch=true;
+      }
+      if(!(acct.sg&&acct.sp)){
+        const kp=await sub.generateKey(ECDSA,true,['sign','verify']),j=await sub.exportKey('jwk',kp.publicKey);
+        acct.sg=await sub.exportKey('jwk',kp.privateKey);acct.sp={x:j.x,y:j.y};ch=true;
+      }
+      if(ch)saveAcct();
+    })();
+  }
+  return kpP;
+}
+
+// ----- friends, blocks, direct messages -----
+function keepDM(u,m){
+  const c=acct.dms[u]=acct.dms[u]||[];
+  c.push({i:m.i,k:'m',u:m.u,n:m.n,t:m.t,ts:m.ts});
+  if(c.length>500)c.shift();
+  saveAcct();
+}
+function loadDM(u){
+  (acct.dms[u]||[]).forEach(m=>{seen.set(m.i,m);msgs.push(m)});
+  unreadDM[u]=0;drawFriends();
+}
+async function sendDM(){
+  const t=msg.value.trim().slice(0,500),u=room.slice(3),f=acct.friends[u];
+  if(!t)return;
+  if(!f){say('You can only message friends.');return}
+  msg.value='';fit();say('');saveDraft();
+  const m={i:rand(10),k:'m',u:uid,n:name,t:t,ts:Date.now(),pending:true};
+  ingest(m);
+  try{
+    await keys();
+    await post({k:'dm',i:m.i,u:uid,n:name,x:await encFor(f.pk,{t:t})},'inbox-'+u);
+    m.pending=false;keepDM(u,m);schedule();
+  }catch(e){msgs=msgs.filter(y=>y!==m);seen.delete(m.i);msg.value=t;fit();schedule();say(why(e))}
+}
+async function friendReq(u,n){
+  if(acct.req[u])return acceptReq(u);
+  await keys();
+  acct.out[u]={n:n,ts:Date.now()};saveAcct();drawFriends();
+  post({k:'fr',i:rand(10),u:uid,n:name,pk:acct.pk},'inbox-'+u).then(()=>say('Friend request sent to '+n+'.')).catch(x=>{delete acct.out[u];saveAcct();drawFriends();say(why(x))});
+}
+async function acceptReq(u){
+  const r=acct.req[u];if(!r)return;
+  await keys();
+  acct.friends[u]={n:r.n,pk:r.pk};delete acct.req[u];saveAcct();drawFriends();
+  post({k:'fa',i:rand(10),u:uid,n:name,pk:acct.pk},'inbox-'+u).catch(x=>say(why(x)));
+}
+function unfriend(u){
+  delete acct.friends[u];saveAcct();drawFriends();
+  post({k:'fx',i:rand(10),u:uid,n:name},'inbox-'+u).catch(()=>{});
+}
+function blockU(u,n){
+  if(!acct.blocked.includes(u))acct.blocked.push(u);
+  acct.bn=acct.bn||{};acct.bn[u]=n;
+  delete acct.friends[u];delete acct.req[u];delete acct.out[u];
+  saveAcct();drawFriends();schedule();say('Blocked '+n+'. You won’t see their messages.');
+}
+function unblock(u){acct.blocked=acct.blocked.filter(x=>x!==u);saveAcct();drawFriends();schedule()}
+
+function drawFriends(){
+  if(!acct)return;
+  const n=Object.keys(acct.req).length+Object.values(unreadDM).reduce((a,b)=>a+b,0);
+  $('frBtn').textContent='👥 Friends'+(n?' ('+n+')':'');
+  const b=$('frBody');b.textContent='';
+  const row=(t,btns)=>{const r=el('div','frow');r.append(el('span',null,t));btns.forEach(([l,f])=>{const x=el('button',null,l);x.type='button';x.onclick=f;r.append(x)});return r};
+  const sec=(t,rows)=>{if(!rows.length)return;b.append(el('div','sub',t));rows.forEach(r=>b.append(r))};
+  sec('Requests',Object.entries(acct.req).map(([u,r])=>row(r.n,[['Accept',()=>acceptReq(u)],['Decline',()=>{delete acct.req[u];saveAcct();drawFriends()}]])));
+  sec('Friends',Object.entries(acct.friends).map(([u,f])=>row(f.n+(unreadDM[u]?' ('+unreadDM[u]+' new)':''),[['Message',()=>{frD.close();enter('dm-'+u)}],['Remove',()=>unfriend(u)],['Block',()=>blockU(u,f.n)]])));
+  sec('Sent requests',Object.entries(acct.out).map(([u,r])=>row(r.n,[['Cancel',()=>{delete acct.out[u];saveAcct();drawFriends()}]])));
+  sec('Blocked',acct.blocked.map(u=>row((acct.bn||{})[u]||u,[['Unblock',()=>unblock(u)]])));
+  if(!b.childNodes.length)b.append(el('p','anote','No friends yet. Click someone’s name or avatar and choose Add friend.'));
+}
+function drawCx(u,n){
+  const b=$('cx');b.textContent='';
+  if(!u||u===uid||!acct)return;
+  const add=(t,f)=>{const x=el('button',null,t);x.type='button';x.onclick=f;b.append(x);return x};
+  if(acct.friends[u])add('Message',()=>{cardD.close();enter('dm-'+u)});
+  else if(acct.req[u])add('Accept request',()=>{cardD.close();acceptReq(u)});
+  else if(acct.out[u])add('Request sent',()=>{}).disabled=true;
+  else add('Add friend',()=>{cardD.close();friendReq(u,n)});
+  if(acct.blocked.includes(u))add('Unblock',()=>{cardD.close();unblock(u)});
+  else add('Block',()=>{if(confirm('Block '+n+'? You won’t see their messages.')){cardD.close();blockU(u,n)}});
+  add('Report',()=>{cardD.close();openReport(u,n)});
+}
+function connectInbox(){
+  if(ies)ies.close();
+  if(acct.banned||acct.tout>Date.now()){ies=null;return}
+  ies=new EventSource(SERVER+'/'+PREFIX+'inbox-'+uid+'/sse?since=all');
+  ies.onmessage=async e=>{
+    let d,m;
+    try{d=JSON.parse(e.data);if(d.event!=='message')return;m=JSON.parse(d.message)}catch(x){return}
+    const id=S(m.i||d.id,24),from=S(m.u,24),n=S(m.n,24)||'Someone',pk=cleanPk(m.pk),ts=(+d.time||0)*1000;
+    if(m.k==='rr'){
+      if(!acct||!ADMIN_PUB.sx||acct.seenIn.includes(id))return;
+      const rn=S(m.n,24),rb=[1,2].includes(+m.b)?+m.b:0,rq=rb===2?S(m.q,6):'',rts=+m.ts||0;
+      if(!(await verifyAdmin(['rr',S(m.r,16),rb,rts,uid,rn].concat(rb===2?[rq]:[]).join('|'),S(m.g,120))))return;
+      acct.seenIn.push(id);saveAcct();
+      resQ.push({a:rb>0,t:'The Llamaz team reviewed your report about '+rn+' and '+(rb===1?'banned this user.':rb===2?'timed this user out for '+(durLbl(rq)||'a while')+'.':'did not ban this user.')});
+      showRes();return;
+    }
+    if(!acct||!from||from===uid||isBlocked(from,ts)||acct.seenIn.includes(id))return;
+    acct.seenIn.push(id);if(acct.seenIn.length>300)acct.seenIn.shift();
+    try{
+      if(m.k==='fr'&&pk&&!acct.friends[from]){
+        if(acct.out[from]){delete acct.out[from];acct.friends[from]={n:n,pk:pk}}
+        else acct.req[from]={n:n,pk:pk,ts:ts};
+      }else if(m.k==='fa'&&pk&&acct.out[from]){delete acct.out[from];acct.friends[from]={n:n,pk:pk}}
+      else if(m.k==='fx'){delete acct.friends[from];delete acct.out[from];delete acct.req[from]}
+      else if(m.k==='dm'&&acct.friends[from]&&m.x){
+        const o=await decWith(acct.sk,m.x),t=S(o&&o.t,500);
+        if(!t)return;
+        const dm={i:id,k:'m',u:from,n:acct.friends[from].n,t:t,ts:ts};
+        keepDM(from,dm);
+        if(room==='dm-'+from)ingest(dm);
+        else{unreadDM[from]=(unreadDM[from]||0)+1;say('New message from '+dm.n+'. Open Friends to read it.');if(snd&&Date.now()-ts<15000)ping()}
+      }
+    }catch(x){return}
+    saveAcct();drawFriends();
+  };
+}
+
+// ----- reports (encrypted so only the owner can read them) -----
+function openReport(u,n){
+  repU={u:u,n:n};
+  $('repT').textContent='Report '+n;
+  $('repS').disabled=!ADMIN_PUB.x;
+  $('repE').textContent=ADMIN_PUB.x?'':'Reporting isn’t set up yet: the owner hasn’t added their key to this app.';
+  $('repE').hidden=!!ADMIN_PUB.x;
+  repD.showModal();
+}
+$('repF').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const eb=$('repE'),btn=$('repS');
+  if(!ADMIN_PUB.x||!repU)return;
+  eb.hidden=true;btn.disabled=true;
+  try{
+    const ctx=isDM(room)?[]:msgs.filter(m=>m.k==='m'&&!m.del).slice(-40).map(m=>({u:m.u,n:m.n,t:S(m.t,500),ts:m.ts}));
+    const all=(acct.dms[repU.u]||[]).map(m=>({u:m.u,n:m.n,t:m.t,ts:m.ts}));
+    let parts=null,rid='';
+    for(const k of [all.length,150,80,40,20,10]){
+      const rep={r:rand(10),ts:Date.now(),from:{u:uid,n:name},about:{u:repU.u,n:repU.n},why:$('repR').value,note:$('repN').value.trim().slice(0,300),where:isDM(room)?'a direct message':'#'+lab(room),ch:ctx,dm:all.slice(-k)};
+      const t=btoa(JSON.stringify(await encFor(ADMIN_PUB,rep))).match(/.{1,2800}/g);
+      if(t.length<=6){parts=t;rid=rep.r;break}
+    }
+    if(!parts)throw 0;
+    await Promise.all(parts.map((d,p)=>post({k:'rp',r:rid,p:p,n:parts.length,d:d},RT().slice(PREFIX.length))));
+    repD.close();$('repN').value='';say('Report sent to the Llamaz team. Thank you.');
+  }catch(x){eb.textContent='Couldn’t send the report. Try again in a moment.';eb.hidden=false}
+  btn.disabled=false;
+});
+
+// ----- owner access (the _llamaz_ account) -----
+const getOwner=()=>store.get('llz-owner',null);
+function ownerOpen(){
+  if(own){showOwner();if(!ownD.open)ownD.showModal();return}
+  const o=getOwner();
+  $('ownBox').hidden=true;$('ownF').hidden=false;$('ownE').hidden=true;$('ownPw').value=$('ownPw2').value='';
+  $('ownC').hidden=!!o;
+  $('ownP').textContent=o?'Enter your passphrase to open the report inbox for _llamaz_.':'Set up owner access for _llamaz_. Reports are encrypted so only this passphrase can open them. If you forget it, reports can’t be recovered.';
+  $('ownB').textContent=o?'Unlock':'Create owner key';
+  if(!ownD.open)ownD.showModal();
+  $('ownPw').focus();
+}
+$('ownF').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const pw=$('ownPw').value,err=t=>{$('ownE').textContent=t;$('ownE').hidden=false};
+  let o=getOwner();
+  try{
+    if(!o){
+      if(pw.length<10)return err('Use a passphrase with at least 10 characters.');
+      if(pw!==$('ownPw2').value)return err('The passphrases don’t match.');
+      const kp=await sub.generateKey(ECDH,true,['deriveKey']),salt=crypto.getRandomValues(new Uint8Array(16)),k0=await pwKey(pw,salt),pj=await sub.exportKey('jwk',kp.publicKey);
+      o={s:b64(salt),k:await seal(k0,await sub.exportKey('jwk',kp.privateKey)),pub:{x:pj.x,y:pj.y}};
+      store.set('llz-owner',o);
+    }
+    const key=await pwKey(pw,unb64(o.s)),priv=await unseal(key,o.k);
+    if(!o.sg){const sp=await sub.generateKey(ECDSA,true,['sign']),sj=await sub.exportKey('jwk',sp.publicKey);o.sg=await seal(key,await sub.exportKey('jwk',sp.privateKey));o.spub={x:sj.x,y:sj.y};store.set('llz-owner',o)}
+    own={key:key,priv:priv,pub:o.pub,spub:o.spub,sg:await sub.importKey('jwk',await unseal(key,o.sg),ECDSA,false,['sign']),reps:[],bans:{},touts:{},tags:{}};
+    const rs=store.get('llz-reports',null);
+    if(rs){try{const dd=await unseal(key,rs);own.reps=Array.isArray(dd)?dd:(dd.reps||[]);own.bans=dd.bans||{};own.touts=dd.touts||{};own.tags=dd.tags||{}}catch(x){}}
+    showOwner();
+  }catch(x){err('That passphrase didn’t work.')}
+});
+function showOwner(){
+  $('ownF').hidden=true;$('ownBox').hidden=false;
+  const m=$('ownMsg');m.textContent='';
+  m.append(el('p','anote','Signed in as _llamaz_. Reports are saved on this device, encrypted with your passphrase. The relay only keeps about 12 hours, so open this at least that often to receive new reports and keep bans fresh.'));
+  const keyOK=ADMIN_PUB.x&&own.pub.x===ADMIN_PUB.x&&own.pub.y===ADMIN_PUB.y;
+  if(keyOK)connectReports();
+  if(!(keyOK&&sigOK())){
+    const w=el('div','warn');
+    w.append(el('p',null,'This app file doesn’t have your full key yet. Open it in a text editor, replace the line starting with const ADMIN_PUB with the line below, then share that file instead. Until then reports, bans and result messages won’t fully work:'));
+    w.append(el('code',null,"const ADMIN_PUB={x:'"+own.pub.x+"',y:'"+own.pub.y+"',sx:'"+own.spub.x+"',sy:'"+own.spub.y+"'};"));
+    m.append(w);
+  }
+  if(own.timer)clearInterval(own.timer);
+  if(sigOK()){publishBans().catch(()=>{});own.timer=setInterval(()=>publishBans().catch(()=>{}),4*36e5)}drawTags();
+  drawOwner();
+}
+function drawOwner(){
+  const b=$('ownList');b.textContent='';
+  if(!own)return;
+  if(!own.reps.length)b.append(el('p','anote','No reports yet.'));
+  own.reps.forEach(r=>{
+    const row=el('div','frow'),v=el('button',null,'View'),d=el('button',null,'Delete');
+    v.type=d.type='button';
+    v.onclick=()=>viewRep(r);
+    d.onclick=()=>{own.reps=own.reps.filter(x=>x!==r);saveReps();drawOwner()};
+    row.append(el('span',null,new Date(r.ts).toLocaleString()+' · '+r.why+' · '+r.about.n+' reported by '+r.from.n+(r.res?' · '+r.res:'')),v,d);
+    b.append(row);
+  });
+  const bl=Object.entries(own.bans),tl=Object.entries(own.touts).filter(([u,t])=>t.until>Date.now());
+  if(bl.length||tl.length){
+    b.append(el('div','sub','Banned and timed-out users'));
+    const line=(t,label,u)=>{const row=el('div','frow'),ub=el('button',null,label);ub.type='button';ub.onclick=()=>unban(u);row.append(el('span',null,t),ub);b.append(row)};
+    bl.forEach(([u,x])=>line(x.n+' ('+u+') · banned','Unban',u));
+    tl.forEach(([u,t])=>line(t.n+' ('+u+') · timed out until '+new Date(t.until).toLocaleString(),'End timeout',u));
+    if(bl.length){
+      const cp=el('button',null,'Copy permanent ban line'),text=()=>'const BANNED='+JSON.stringify(Object.keys(own.bans))+';';
+      cp.type='button';
+      cp.onclick=()=>navigator.clipboard.writeText(text()).then(()=>{cp.textContent='Copied. Paste it over the const BANNED line in the app file.'}).catch(()=>prompt('Copy this line:',text()));
+      b.append(cp);
+    }
+  }
+}
+function saveReps(){if(own)seal(own.key,{reps:own.reps,bans:own.bans,touts:own.touts,tags:own.tags}).then(o=>store.set('llz-reports',o))}
+function connectReports(){
+  if(rES)rES.close();
+  rES=new EventSource(SERVER+'/'+RT()+'/sse?since=all');
+  rES.onmessage=async e=>{
+    try{
+      const d=JSON.parse(e.data);
+      if(d.event!=='message'||!own)return;
+      const m=JSON.parse(d.message);
+      if(m.k!=='rp')return;
+      const r=S(m.r,16),p=+m.p,n=+m.n;
+      if(!r||!(n>=1&&n<=6)||!(p>=0&&p<n)||own.reps.some(x=>x.r===r))return;
+      let g=rparts.get(r);if(!g)rparts.set(r,g={});
+      g[p]=S(m.d,3000);
+      if(Object.keys(g).length<n)return;
+      const rep=await decWith(own.priv,JSON.parse(atob(Array.from({length:n},(_,i)=>g[i]).join(''))));
+      rparts.delete(r);
+      if(!rep||!rep.about||!rep.from||own.reps.some(x=>x.r===r))return;
+      own.reps.unshift(clampRep(rep));saveReps();drawOwner();
+    }catch(x){}
+  };
+}
+function viewRep(r){
+  const b=$('repVB');b.textContent='';
+  b.append(el('h2',null,'Report about '+r.about.n),el('p','anote',new Date(r.ts).toLocaleString()+' · Reason: '+r.why+(r.note?' · Note: '+r.note:'')));
+  b.append(el('p','anote','Reported user ID: '+r.about.u+' · Reported by '+r.from.n+' ('+r.from.u+'). Transcripts are supplied by the reporter and can’t be verified, so read them before you decide.'));
+  const act=el('div','row cx'),add=(t,f,c)=>{const x=el('button',c||null,t);x.type='button';x.onclick=f;act.append(x)};
+  if(r.res){
+    act.append(el('span','anote','Resolved '+new Date(r.resTs).toLocaleString()+': '+r.res+', reporter told.'));
+    if(own.bans[r.about.u]||own.touts[r.about.u])add('Lift restriction on '+r.about.n,()=>unban(r.about.u));
+  }else if(!sigOK())act.append(el('span','anote','To ban people and notify reporters, add the updated key line from Owner access to the app file first.'));
+  else{add('Ban '+r.about.n,()=>resolveRep(r,'ban'),'danger');add('Time out…',()=>{toR=r;$('toT').textContent='Time out '+r.about.n;toD.showModal()});add('Don’t ban',()=>resolveRep(r,'none'))}
+  b.append(act);
+  const blk=(t,a)=>{
+    if(!a.length)return;
+    b.append(el('div','sub',t));
+    const l=el('div','tr');
+    a.forEach(m=>{const p=el('p');p.append(el('b',null,m.n+' '),el('time',null,new Date(m.ts).toLocaleString()+': '),m.t);l.append(p)});
+    b.append(l);
+  };
+  blk('Direct messages ('+r.dm.length+')',r.dm);
+  blk('Recent messages in '+(r.where||'the room')+' ('+r.ch.length+')',r.ch);
+  repV.showModal();
+}
+$('ownLock').onclick=()=>{if(rES)rES.close();rES=null;if(own&&own.timer)clearInterval(own.timer);own=null;ownD.close()};
+$('frBtn').onclick=()=>{drawFriends();frD.showModal()};
+$('frX').onclick=()=>frD.close();
+$('repC').onclick=()=>repD.close();
+$('ownX').onclick=()=>ownD.close();
+$('repVX').onclick=()=>repV.close();
+$('ownLnk').onclick=ownerOpen;
+const ECDSA={name:'ECDSA',namedCurve:'P-256'};
+let bES=null;
+const bs0=store.get('llz-bans',{ts:0,u:[]});
+let bans=new Set([...BANNED,...(Array.isArray(bs0.u)?bs0.u:[])]),bansTs=+bs0.ts||0,touts=Object.fromEntries((Array.isArray(bs0.x)?bs0.x:[]).map(p=>[p[0],[p[1],p[2]]]));
+const BT=()=>'b-'+ADMIN_PUB.sx.slice(0,20).replace(/[^A-Za-z0-9_-]/g,'');
+const sigOK=()=>!!(own&&own.spub&&ADMIN_PUB.sx&&own.spub.x===ADMIN_PUB.sx&&own.spub.y===ADMIN_PUB.sy);
+async function signStr(str){return b64(new Uint8Array(await sub.sign({name:'ECDSA',hash:'SHA-256'},own.sg,new TextEncoder().encode(str))))}
+async function verifyAdmin(str,sig){
+  try{
+    const k=await sub.importKey('jwk',{kty:'EC',crv:'P-256',x:ADMIN_PUB.sx,y:ADMIN_PUB.sy,ext:true},ECDSA,false,['verify']);
+    return await sub.verify({name:'ECDSA',hash:'SHA-256'},k,unb64(sig),new TextEncoder().encode(str));
+  }catch(e){return false}
+}
+function connectBans(){
+  if(bES)bES.close();
+  bES=null;
+  if(!ADMIN_PUB.sx)return;
+  bES=new EventSource(SERVER+'/'+PREFIX+BT()+'/sse?since=all');
+  bES.onmessage=async e=>{
+    try{
+      const d=JSON.parse(e.data);
+      if(d.event!=='message')return;
+      const m=JSON.parse(d.message),ts=+m.ts||0;
+      if(m.k==='tg'){
+        const t=(Array.isArray(m.t)?m.t:[]).slice(0,20).map(p=>[S(p&&p[0],24),cleanTag(p&&p[1]),S(p&&p[2],60),S(p&&p[3],60)]);
+        if(ts<=tagsTs||!(await verifyAdmin(['tg',ts,t.map(p=>p.join(':')).join(',')].join('|'),S(m.g,120))))return;
+        tagsTs=ts;tags=Object.assign(tagMap(STAFF),tagMap(t));store.set('llz-tags',{ts:ts,t:t});
+        msgs.forEach(x=>{x.vs=undefined;if(x.k==='m'&&tags[x.u])vfyMsg(x)});
+        schedule();return;
+      }
+      if(m.k!=='bl')return;
+      const u=(Array.isArray(m.u)?m.u:[]).slice(0,150).map(x=>S(x,24));
+      const x=(Array.isArray(m.x)?m.x:[]).slice(0,100).map(p=>[S(p&&p[0],24),+(p&&p[1])||0,+(p&&p[2])||0]);
+      const sg=['bl',ts,u.join(',')].concat(x.length?[x.map(p=>p.join(':')).join(',')]:[]).join('|');
+      if(ts<=bansTs||!(await verifyAdmin(sg,S(m.g,120))))return;
+      bansTs=ts;bans=new Set([...BANNED,...u]);
+      touts=Object.fromEntries(x.filter(p=>p[0]&&p[2]).map(p=>[p[0],[p[1],p[2]]]));
+      store.set('llz-bans',{ts:ts,u:u,x:x});
+      schedule();
+      if(acct)checkSelf();
+    }catch(e2){}
+  };
+}
+function selfState(){
+  if(bans.has(uid))return{ban:1};
+  const t=touts[uid],n=Date.now();
+  return t&&n>=t[0]&&n<t[1]?{until:t[1]}:null;
+}
+function checkSelf(){
+  const st=selfState();
+  if(st){acct.banned=st.ban?1:0;acct.tout=st.until||0;saveAcct();lockBanned(st)}
+  else if(acct.banned||acct.tout){acct.banned=0;acct.tout=0;saveAcct();location.reload()}
+}
+function lockBanned(st){
+  [ies,es,mes].forEach(x=>{if(x)x.close()});
+  ies=es=mes=null;mfor='';
+  const ban=!st||st.ban;
+  $('banT').textContent=ban?'Your account has been banned':'You’re timed out';
+  $('banP').textContent=ban?'The Llamaz team reviewed a report and banned this account, so you can’t read or send messages with it.':'The Llamaz team has timed this account out until '+new Date(st.until).toLocaleString()+'. You can use the app again after that.';
+  app.hidden=true;$('banned').hidden=false;
+  if(!ban&&!lockT)lockT=setInterval(()=>{if(acct&&acct.tout&&Date.now()>=acct.tout)location.reload()},6e4);
+}
+async function notifyReporter(r,b,q){
+  const ts=Date.now(),to=r.from.u,sg=['rr',r.r,b,ts,to,r.about.n].concat(b===2?[q]:[]).join('|');
+  await post({k:'rr',i:rand(10),r:r.r,n:r.about.n,b:b,q:b===2?q:'',ts:ts,g:await signStr(sg)},'inbox-'+to);
+}
+async function publishBans(){
+  if(!sigOK())return;
+  const ts=Date.now(),u=Object.keys(own.bans).slice(0,80);
+  Object.keys(own.touts).forEach(k=>{if(own.touts[k].until<ts-30*864e5)delete own.touts[k]});
+  const x=Object.entries(own.touts).slice(0,40).map(([k,t])=>[k,t.from,t.until]);
+  const sg=['bl',ts,u.join(',')].concat(x.length?[x.map(p=>p.join(':')).join(',')]:[]).join('|');
+  await post({k:'bl',ts:ts,u:u,x:x,g:await signStr(sg)},BT());
+  await publishTags();
+}
+async function publishTags(){
+  if(!sigOK())return;
+  const ts=Date.now(),t=Object.entries(own.tags).slice(0,20).map(([u,g])=>[u,g.l,g.x,g.y]);
+  await post({k:'tg',ts:ts,t:t,g:await signStr(['tg',ts,t.map(e=>e.join(':')).join(',')].join('|'))},BT());
+}
+async function resolveRep(r,kind,q){
+  const lbl=durLbl(q);
+  if(kind!=='timeout'&&!confirm(kind==='ban'?'Ban '+r.about.n+'? Their messages will be hidden for everyone running this app, and the person who reported them will be told.':'Close this report without a ban? The person who reported will be told no ban was issued.'))return;
+  const b=kind==='ban'?1:kind==='timeout'?2:0;
+  try{await notifyReporter(r,b,q)}catch(e){alert('Couldn’t reach the relay, so nothing was changed. Try again in a moment.');return}
+  r.res=b===1?'banned':b===2?'timed out for '+lbl:'no ban';r.resTs=Date.now();
+  if(b===1)own.bans[r.about.u]={n:r.about.n,ts:r.resTs,why:r.why};
+  if(b===2)own.touts[r.about.u]={n:r.about.n,from:r.resTs,until:r.resTs+durMs(q),why:r.why,q:q};
+  saveReps();publishBans().catch(()=>{});drawOwner();repV.close();
+}
+function unban(u){
+  if(!confirm('Lift the ban or timeout for this user?'))return;
+  delete own.bans[u];delete own.touts[u];saveReps();publishBans().catch(()=>{});drawOwner();repV.close();
+}
+$('banOut').onclick=logout;
+const tOut=(u,ts)=>{const t=touts[u];if(!t)return false;const n=ts==null?Date.now():ts;return n>=t[0]&&n<t[1]};
+const durLbl=q=>{const m=/^(\d{1,3})([dwm])$/.exec(q||'');return m?m[1]+' '+({d:'day',w:'week',m:'month'})[m[2]]+(+m[1]>1?'s':''):''};
+const durMs=q=>{const m=/^(\d{1,3})([dwm])$/.exec(q||'');return m?+m[1]*864e5*({d:1,w:7,m:30})[m[2]]:0};
+let toR=null,lockT=null;
+const resQ=[],toD=$('toD'),resD=$('resD');
+function showRes(){
+  if(resD.open||!resQ.length)return;
+  const x=resQ.shift();
+  $('resI').textContent=x.a?'✅':'ℹ️';$('resP').textContent=x.t;
+  resD.showModal();
+}
+resD.addEventListener('close',showRes);
+$('resOK').onclick=()=>resD.close();
+$('toC').onclick=()=>toD.close();
+$('toF').addEventListener('submit',e=>{
+  e.preventDefault();
+  const n=Math.min(99,Math.max(1,parseInt($('toN').value,10)||1)),q=n+$('toU').value;
+  toD.close();
+  if(toR)resolveRep(toR,'timeout',q);
+});
+const cleanTag=v=>String(v==null?'':v).replace(/[^A-Za-z0-9 _-]/g,'').trim().slice(0,16);
+const tagMap=t=>Object.fromEntries(t.filter(p=>p[0]&&p[1]&&p[2]&&p[3]).map(p=>[p[0],{l:p[1],x:p[2],y:p[3]}]));
+const cleanSg=k=>k&&typeof k==='object'&&k.kty==='EC'&&k.crv==='P-256'&&k.d&&k.x&&k.y?{kty:'EC',crv:'P-256',d:S(k.d,60),x:S(k.x,60),y:S(k.y,60),ext:true,key_ops:['sign']}:null;
+const tg0=store.get('llz-tags',{ts:0,t:[]});
+let tagsTs=+tg0.ts||0,tags=Object.assign(tagMap(STAFF),tagMap(Array.isArray(tg0.t)?tg0.t:[])),sigK=null,sigU='';
+const TAGC={owner:'#9A6B00',dev:'#2F62D6','beta tester':'#7B3FB0','test account':'#5A6A6F'};
+const tagColor=l=>TAGC[l.toLowerCase()]||'hsl('+hue(l)+' 55% 34%)';
+const tagEl=l=>{const t=el('span','tgb',l);t.style.setProperty('--tc',tagColor(l));return t};
+const RESV=['owner','admin','administrator','staff','moderator','mod','support','team','developer','dev','betatester','testaccount'];
+const badName=n=>{const k=String(n).toLowerCase().replace(/[^a-z0-9]/g,'');return !!k&&(RESV.includes(k)||k.startsWith('llamaz'))};
+const msgCanon=ev=>['m',room,ev.i,ev.u,ev.t,ev.a?1:0,ev.f?ev.f.u:''].join('|');
+const isVer=u=>{
+  const t=tags[u];
+  if(!t)return false;
+  if(u===uid)return !!(acct&&acct.sp&&acct.sp.x===t.x&&acct.sp.y===t.y);
+  return msgs.some(m=>m.u===u&&m.k==='m'&&m.vs===true);
+};
+async function signMsg(str){
+  if(!sigK||sigU!==acct.un){sigK=await sub.importKey('jwk',acct.sg,ECDSA,false,['sign']);sigU=acct.un}
+  return b64(new Uint8Array(await sub.sign({name:'ECDSA',hash:'SHA-256'},sigK,new TextEncoder().encode(str))));
+}
+async function trySign(str){try{await keys();return await signMsg(str)}catch(e){return undefined}}
+async function vfyMsg(ev){
+  if(isDM(room))return;
+  const t=tags[ev.u];
+  if(!t||!ev.sg){ev.vs=false;schedule();return}
+  try{
+    const k=await sub.importKey('jwk',{kty:'EC',crv:'P-256',x:t.x,y:t.y,ext:true},ECDSA,false,['verify']);
+    ev.vs=await sub.verify({name:'ECDSA',hash:'SHA-256'},k,unb64(ev.sg),new TextEncoder().encode(msgCanon(ev)));
+  }catch(e){ev.vs=false}
+  schedule();
+}
+function decorate(m,nb,h){
+  const t=tags[m.u];
+  if(t&&m.vs===false)nb.textContent='⚠ '+m.n+' (unverified)';
+  else if(!t&&badName(m.n))nb.textContent=m.n+' (not staff)';
+  h.append(nb);
+  if(t&&m.vs===true)h.append(tagEl(t.l));
+}
+function drawTags(){
+  const b=$('ownTagList');b.textContent='';
+  if(!own)return;
+  const es=Object.entries(own.tags);
+  if(!es.length)b.append(el('p','anote','No staff tags yet.'));
+  es.forEach(([u,g])=>{
+    const row=el('div','frow'),rm=el('button',null,'Remove'),sp=el('span');
+    rm.type='button';
+    rm.onclick=()=>{delete own.tags[u];saveReps();publishTags().catch(()=>{});drawTags()};
+    sp.append(tagEl(g.l),' '+(g.note?g.note+' · ':'')+u);
+    row.append(sp,rm);b.append(row);
+  });
+  if(es.length){
+    const cp=el('button',null,'Copy permanent staff line'),text=()=>'const STAFF='+JSON.stringify(es.map(([u,g])=>[u,g.l,g.x,g.y]))+';';
+    cp.type='button';
+    cp.onclick=()=>navigator.clipboard.writeText(text()).then(()=>{cp.textContent='Copied. Paste it over the const STAFF line in the app file.'}).catch(()=>prompt('Copy this line:',text()));
+    b.append(cp);
+  }
+}
+$('tgL').onchange=()=>{$('tgC').hidden=$('tgL').value!==''};
+$('tagF').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const err=t=>{$('tgE').textContent=t;$('tgE').hidden=false};
+  $('tgE').hidden=true;
+  if(!own)return;
+  if(!sigOK())return err('Add your updated key line to the app file first (see the notice above).');
+  const parts=$('tgId').value.trim().split('.'),u=S(parts[0],24),x=S(parts[1],60),y=S(parts[2],60);
+  if(!/^[a-z0-9]{12}$/.test(u)||x.length<40||y.length<40)return err('That doesn’t look like an account ID. Ask them to use Copy account ID in their profile.');
+  const l=cleanTag($('tgL').value||$('tgC').value);
+  if(!l)return err('Pick or type a tag.');
+  if(Object.keys(own.tags).length>=20&&!own.tags[u])return err('You can tag up to 20 accounts.');
+  own.tags[u]={l:l,x:x,y:y,note:S($('tgN').value.trim(),24)};
+  saveReps();
+  try{await publishTags()}catch(e2){err('Saved, but couldn’t publish yet. It will be sent again while Owner access is unlocked.')}
+  $('tgId').value=$('tgN').value=$('tgC').value='';drawTags();
+});
+$('pid').onclick=async()=>{
+  await keys();
+  const t=uid+'.'+acct.sp.x+'.'+acct.sp.y;
+  try{await navigator.clipboard.writeText(t);$('pid').textContent='Copied'}catch(e){prompt('Copy your account ID:',t)}
+};
+const sess=store.get('llz-session','');
+if(sess&&getA()[sess])login(sess,false,false);else showAuth();
+})();
+</script>
+</body>
+</html>
