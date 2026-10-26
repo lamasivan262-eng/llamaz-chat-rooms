@@ -177,7 +177,7 @@ button.brand{background:none;border:0;color:inherit;text-align:left;width:100%}
 .menu button{border:1px solid var(--line);background:none;border-radius:.6rem;padding:.6rem;text-align:left}
 @media (prefers-reduced-motion:reduce){.srv{transition:none}}
 @media (max-width:720px){aside{inset:0 auto 0 72px;width:240px;transform:translateX(calc(-100% - 72px))}#rail{position:fixed;inset:0 auto 0 0;width:72px;transform:translateX(-100%);z-index:3}.open #rail{transform:none}}
-
+ 
 #profD{width:min(46rem,94vw)}
 .phead{display:flex;justify-content:space-between;align-items:center}
 .phead h2{margin:0}
@@ -433,11 +433,12 @@ main.drag{outline:3px dashed var(--ring);outline-offset:-6px}
 // Messages are relayed through a free public pub/sub server. Swap this for your own ntfy server if you host one.
 const SERVER='https://ntfy.sh',PREFIX='llamaz-';
 // Owner: open Owner access on the sign-in screen, then replace the next line with the one it shows you.
-const ADMIN_PUB={x:'l-P-WiqtOkAwG3oXCsP2R9ihP8vBbah52kY0bQIYT8k',y:'fKtpLLCPf1DGlignj5-nw7kn3AqPTwSF7jALRrSYHQI',sx:'vHa73nWiiVVBODJVc_jZNmk-qPGm29i1gh2nABn-I5E',sy:'NqmxBVR_hj34lLGriySYfEAOqBwI82lnqSGq6mxvSEE'};
+const ADMIN_PUB={x:'',y:'',sx:'',sy:''};
 // Owner: Owner access can also give you a line to paste here that permanently bans people.
 const BANNED=[];
 // Owner: Owner access can also give you a line to paste here that makes staff tags permanent.
-const STAFF=[["o9ci1z0k4cvm","Owner","3IFTLShUFfvEGGq4bBjAOQSKi3AM5xkSa3J_05Z_EQ4","oeeybcdSBrmpRKu9DOR8Bj9JKji3p26BQi0dJj__qiA"]];
+const STAFF=[];
+const $=id=>document.getElementById(id);
 const app=$('app'),log=$('log'),msg=$('msg'),notice=$('notice'),nav=$('rooms'),dot=$('dot'),state=$('state'),title=$('title'),invite=$('invite'),nameD=$('nameD'),nm=$('nm'),emojis=$('emojis'),bar=$('replybar');
 const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const rand=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>'abcdefghijklmnopqrstuvwxyz0123456789'[b%36]).join('');
@@ -451,11 +452,11 @@ const dayLabel=ts=>{const d=new Date(ts).toDateString(),n=new Date();return d===
 const why=e=>e===429?'The free relay is rate-limiting you. Wait a few seconds and try again.':'Couldn’t reach the relay. Check your connection and try again.';
 const QUICK=['👍','💖','😂','🎉'];
 const EMOJI=Array.from('😀😂😅😊😍😘😎🤔😢😭😡😴🤯🥳🤝👍👎👏🙌🙏💪👀🔥✨💯💖💔🎉🎶🍕☕🌈⭐✅❌🦙🐶🐱🌮🍔🚀😬🙈👋🤣😇🥺');
-
+ 
 let uid='',acct=null;const profiles=new Map();
 let name='',rooms=store.get('cr-rooms',[]),room='',es=null,msgs=[],seen=new Map(),reacts=new Map(),queued=false,reply=null,unread=0,snd=store.get('cr-snd',true),ac,ann;
 try{ann=new Set(JSON.parse(sessionStorage.getItem('cr-j')||'[]'))}catch(e){ann=new Set()}
-
+ 
 function say(t){notice.textContent=t;notice.hidden=!t}
 function rich(p,text){
   text.split(/(https?:\/\/[^\s<]+|`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).forEach((s,k)=>{
@@ -479,7 +480,7 @@ function notify(ev){
   if(Date.now()-ev.ts>15000||(!document.hidden&&document.hasFocus()))return;
   unread++;refreshTitle();if(snd)ping();
 }
-
+ 
 function drawPeople(){
   const ppl=new Map(),now=Date.now();
   msgs.forEach(m=>{if(!isBlocked(m.u,m.ts))ppl.set(m.u,{n:m.n,t:m.ts,v:m.vs===true})});
@@ -492,7 +493,7 @@ function drawPeople(){
     const sp=el('span'),st=stOf(profiles.get(u)||{});sp.append(el('b',null,u===uid?p.n+' (you)':p.n));if(tags[u]&&p.v)sp.append(tagEl(tags[u].l));if(st)sp.append(el('span','stt',st));r.type='button';r.onclick=()=>card(u,p.n);r.append(av,sp);box.append(r);
   });
 }
-
+ 
 function render(){
   const end=log.scrollHeight-log.scrollTop-log.clientHeight<80,by=new Map();
   reacts.forEach((n,k)=>{
@@ -533,7 +534,7 @@ function render(){
     li.append(body);
     const tools=el('div','tools');
     QUICK.forEach(e=>{const b=el('button',null,e);b.type='button';b.setAttribute('aria-label','React '+e);b.onclick=ev=>{ev.stopPropagation();react(m.i,e)};tools.append(b)});
-    const rp=el('button','rp','Reply');rp.type='button';rp.onclick=ev=>{ev.stopPropagation();setReply(m)};tools.append(rp);if(m.u===uid&&!m.pending&&!tags[uid]){const eb=el('button','rp','Edit'),xb=el('button','rp','Delete');eb.type=xb.type='button';eb.onclick=ev=>{ev.stopPropagation();startEdit(m)};xb.onclick=ev=>{ev.stopPropagation();delMsg(m)};tools.append(eb,xb)}
+    const rp=el('button','rp','Reply');rp.type='button';rp.onclick=ev=>{ev.stopPropagation();setReply(m)};tools.append(rp);if(m.u===uid&&!m.pending){const eb=el('button','rp','Edit'),xb=el('button','rp','Delete');eb.type=xb.type='button';eb.onclick=ev=>{ev.stopPropagation();startEdit(m)};xb.onclick=ev=>{ev.stopPropagation();delMsg(m)};tools.append(eb,xb)}
     if(!isDM(room))li.append(tools);
     li.onclick=()=>{const was=li.classList.contains('sel');log.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));if(!was)li.classList.add('sel')};
     log.append(li);prev=m;
@@ -543,14 +544,26 @@ function render(){
   drawPeople();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;render()})}
-
+ 
 function ingest(ev){
   if(ev.u!==uid&&isBlocked(ev.u,ev.ts))return;const ex=seen.get(ev.i);
   if(ex){
     if(ex.pending&&ev.k==='m'){ex.pending=false;ex.ts=ev.ts;if(ev.f)ex.f=ev.f;if(ev.sg)ex.sg=ev.sg;if(tags[ex.u])vfyMsg(ex);msgs.sort((a,b)=>a.ts-b.ts);schedule()}
     return;
   }
-  seen.set(ev.i,ev);prof(ev.u,ev.k==='m'?{n:ev.n,ae:ev.ae||undefined,ac:ev.ac||undefined}:Object.assign({n:ev.n},ev.p||{}),ev.ts);if(ev.k==='p'){schedule();return}if(ev.k==='x'||ev.k==='e'){const t=seen.get(ev.m);if(t&&t.k==='m'&&t.u===ev.u&&!tags[t.u]){if(ev.k==='x')t.del=1;else{t.t=ev.t;t.ed=1}}schedule();return}
+  seen.set(ev.i,ev);prof(ev.u,ev.k==='m'?{n:ev.n,ae:ev.ae||undefined,ac:ev.ac||undefined}:Object.assign({n:ev.n},ev.p||{}),ev.ts);if(ev.k==='p'){schedule();return}if(ev.k==='x'||ev.k==='e'){
+    const t=seen.get(ev.m);
+    if(t&&t.k==='m'&&t.u===ev.u){
+      const go=()=>{
+        if(ev.k==='x'){t.del=1;t.ds={i:ev.i,sg:ev.sg,u:ev.u}}
+        else{if(t.ot===undefined)t.ot=t.t;t.t=ev.t;t.ed=1;t.es={i:ev.i,sg:ev.sg,u:ev.u,t:ev.t}}
+        schedule();
+      };
+      if(tags[t.u])vOne(ev,ev.k==='e'?['e',room,ev.i,ev.u,ev.m,ev.t].join('|'):['x',room,ev.i,ev.u,ev.m].join('|')).then(ok=>{if(ok)go()});
+      else go();
+    }
+    schedule();return;
+  }
   if(ev.k==='r'){
     const key=ev.m+'|'+ev.e+'|'+ev.u;
     if(ev.on)reacts.set(key,ev.n);else reacts.delete(key);
@@ -561,7 +574,7 @@ function ingest(ev){
   if(ev.k==='m'&&ev.u!==uid&&!ev.pending)notify(ev);
   schedule();
 }
-
+ 
 function setState(live){dot.className='dot'+(live?' live':'');state.textContent=live?'Live':'Connecting…'}
 async function post(o,rm){if(isDM(rm||room))throw 0;if(acct&&(acct.banned||acct.tout>Date.now()))throw 0;
   const r=await fetch(SERVER+'/'+PREFIX+(rm||room),{method:'POST',body:JSON.stringify(o)});
@@ -573,7 +586,7 @@ function announce(){
   const mine=room;
   post({k:'j',i:rand(10),u:uid,n:name,p:pub()}).catch(()=>ann.delete(mine));
 }
-
+ 
 function connect(){
   if(es)es.close();
   const mine=room;
@@ -589,7 +602,7 @@ function connect(){
     ingest({i:String(m.i||d.id),k:m.k||'m',u:String(m.u||''),n:String(m.n||'Someone').slice(0,24),t:String(m.t||'').slice(0,500),a:m.a?1:0,q:q,ae:S(m.ae,8),ac:C(m.ac),p:P(m.p),f:fileOf(m.f),sg:S(m.sg,120),m:String(m.m||''),e:String(m.e||'').slice(0,8),on:m.on?1:0,ts:(+d.time||0)*1000});
   };
 }
-
+ 
 function drawRooms(){
   nav.textContent='';
   const sv=srvOf(srv);
@@ -613,7 +626,7 @@ function drawMe(){
   b.append(avEl(uid,name),sp);
 }
 function drawSnd(){$('snd').textContent=snd?'🔔 Sound on':'🔕 Sound off'}
-
+ 
 function enter(c){
   c=clean(c||'');
   if(!c||c===room)return;
@@ -624,7 +637,7 @@ function enter(c){
   title.textContent=isDM(c)?'@ '+dmName(c):'# '+lab(c);refreshTitle();msg.placeholder=isDM(c)?'Message '+dmName(c):'Message #'+lab(c);
   drawRail();drawSide();connectMeta();if(isDM(c)){if(es)es.close();es=null;setState(true);loadDM(c.slice(3))}else connect();render();
 }
-
+ 
 function fit(){msg.style.height='auto';msg.style.height=Math.min(msg.scrollHeight,140)+'px'}
 function setReply(m){
   if(m)stopEdit();reply=m?{i:m.i,n:m.n,t:(m.t||(m.f?'📎 '+m.f.n:'')).slice(0,80)}:null;
@@ -636,7 +649,7 @@ function setName(v){
   if(!v)return;
   if(badName(v)&&!tags[uid]){say('That display name is reserved.');return}saveProfile(Object.assign({},acct.profile,{n:v}));
 }
-
+ 
 function react(mid,e){
   if(!name){askName();return}
   const key=mid+'|'+e+'|'+uid,on=!reacts.has(key),i=rand(10);
@@ -646,7 +659,7 @@ function react(mid,e){
     schedule();say(why(x));
   });
 }
-
+ 
 async function send(){
   if(isDM(room)){sendDM();return}const raw=msg.value;
   let t=raw.trim().slice(0,500),a=0;
@@ -656,13 +669,13 @@ async function send(){
   else if(t==='/shrug'||t.startsWith('/shrug ')){t=(t.slice(6).trim()+' ¯\\_(ツ)_/¯').trim()}
   if(!t)return;
   if(!name){askName();return}
-  if(editing){const em=editing;editing=null;bar.hidden=true;msg.value='';fit();if(t===em.t)return;const ei=rand(10),old=em.t;ingest({i:ei,k:'e',u:uid,n:name,m:em.i,t:t,ts:Date.now()});post({k:'e',i:ei,u:uid,n:name,m:em.i,t:t}).catch(x=>{em.t=old;em.ed=0;schedule();say(why(x))});return}
+  if(editing){const em=editing;editing=null;bar.hidden=true;msg.value='';fit();if(t===em.t)return;const ei=rand(10),old=em.t,esg=await trySign(['e',room,ei,uid,em.i,t].join('|'));ingest({i:ei,k:'e',u:uid,n:name,m:em.i,t:t,sg:esg,ts:Date.now()});post({k:'e',i:ei,u:uid,n:name,m:em.i,t:t,sg:esg}).catch(x=>{em.t=old;em.ed=0;schedule();say(why(x))});return}
   const i=rand(10),q=reply,m={i:i,k:'m',u:uid,n:name,t:t,a:a,q:q,ts:Date.now(),pending:true};
   msg.value='';fit();say('');setReply(null);saveDraft();ingest(m);
   try{try{await keys();m.sg=await signMsg(['m',room,i,uid,t,a?1:0,''].join('|'))}catch(e0){}if(tags[uid])vfyMsg(m);await post({k:'m',i:i,u:uid,n:name,ae:acct.profile.ae,ac:acct.profile.ac,t:t,a:a,q:q,sg:m.sg})}
   catch(e){msgs=msgs.filter(x=>x!==m);seen.delete(i);msg.value=raw;fit();schedule();say(why(e))}
 }
-
+ 
 function askName(){openProfile()}
 $('nameF').addEventListener('submit',e=>{
   e.preventDefault();
@@ -672,7 +685,7 @@ $('nameF').addEventListener('submit',e=>{
 nameD.addEventListener('cancel',e=>{if(!name)e.preventDefault()});
 $('me').onclick=askName;
 $('snd').onclick=()=>{snd=!snd;store.set('cr-snd',snd);drawSnd()};
-
+ 
 $('joinF').addEventListener('submit',e=>{e.preventDefault();enter($('code').value);$('code').value='';app.classList.remove('open')});
 $('newBtn').onclick=()=>{enter(rand(12));app.classList.remove('open')};
 $('menu').onclick=()=>app.classList.add('open');
@@ -681,7 +694,7 @@ window.addEventListener('hashchange',()=>{if(acct)route(location.hash.slice(1))}
 const seenNow=()=>{unread=0;refreshTitle()};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)seenNow()});
 window.addEventListener('focus',seenNow);
-
+ 
 const web=/^https?:$/.test(location.protocol);
 invite.textContent=web?'Copy invite link':'Copy room code';
 invite.onclick=async()=>{
@@ -689,9 +702,9 @@ invite.onclick=async()=>{
   try{await navigator.clipboard.writeText(text);invite.textContent='Copied';setTimeout(()=>{invite.textContent=web?'Copy invite link':'Copy room code'},1500)}
   catch(e){prompt('Copy this:',text)}
 };
-
+ 
 $('compose').addEventListener('submit',e=>{e.preventDefault();send()});
-msg.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}else if(e.key==='ArrowUp'&&!msg.value){const l=msgs.filter(x=>x.u===uid&&x.k==='m'&&!x.del&&!x.pending&&!tags[uid]).pop();if(l){e.preventDefault();startEdit(l)}}});
+msg.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}else if(e.key==='ArrowUp'&&!msg.value){const l=msgs.filter(x=>x.u===uid&&x.k==='m'&&!x.del&&!x.pending).pop();if(l){e.preventDefault();startEdit(l)}}});
 msg.addEventListener('input',fit);
 $('rc').onclick=()=>{stopEdit();setReply(null)};
 $('emojiBtn').onclick=e=>{e.stopPropagation();emojis.hidden=!emojis.hidden};
@@ -703,7 +716,7 @@ EMOJI.forEach(e=>{
   emojis.append(b);
 });
 setInterval(drawPeople,6e4);
-
+ 
 const S=(v,n)=>String(v==null?'':v).slice(0,n),C=v=>/^#[0-9a-f]{6}$/i.test(v)?v:'';
 const P=p=>p&&typeof p==='object'?{ae:S(p.ae,8),ac:C(p.ac),pr:S(p.pr,20),st:S(p.st,40),bc:C(p.bc),im:IM(p.im),sx:+p.sx||0,tg:S(p.tg,80),bio:S(p.bio,160)}:null;
 const pub=()=>{const p=acct.profile;return{ae:p.ae,ac:p.ac,bc:p.bc||'',im:p.im||'',pr:p.pr,st:p.st,sx:p.sx||0,tg:p.tg||'',bio:p.bio}};
@@ -713,7 +726,7 @@ const profD=$('profD'),cardD=$('cardD'),SW=['#E5484D','#E5871B','#C99A06','#2FA6
 let mode='login',pe='',pc='',pb='',pi='',editing=null;
 const drafts=store.get('cr-drafts',{});
 const stOf=p=>p.st&&(!p.sx||p.sx>Date.now())?p.st:'',tagStr=v=>v.split(',').map(x=>x.trim().slice(0,16)).filter(Boolean).slice(0,5).join(', ');
-
+ 
 function prof(u,p,ts){
   if(u===uid)return;
   const o=profiles.get(u)||{};
@@ -732,7 +745,7 @@ function saveProfile(p){
   syncMe();drawMe();schedule();
   if(es&&es.readyState===1)post({k:'p',i:rand(10),u:uid,n:name,p:pub()}).catch(x=>say(why(x)));
 }
-
+ 
 async function hashPw(pw,salt){
   const enc=new TextEncoder();
   if(window.crypto&&crypto.subtle){
@@ -770,7 +783,7 @@ function logout(){
   [profD,cardD].forEach(d=>{if(d.open)d.close()});
   if(bES)bES.close();bES=null;$('banned').hidden=true;store.set('llz-session','');setReply(null);showAuth();
 }
-
+ 
 function pSel(){
   const d='hsl('+hue(uid)+' 48% 40%)',pv=$('pav'),n=$('pn').value||name;
   pv.textContent=pi?'':(pe||initial(n));
@@ -816,7 +829,7 @@ function card(u,n){
   };
   drawCx(u,p.n||n);if(!cardD.open)cardD.showModal();
 }
-
+ 
 $('tLogin').onclick=()=>authMode('login');$('tSign').onclick=()=>authMode('sign');
 $('authF').addEventListener('submit',async e=>{
   e.preventDefault();
@@ -851,16 +864,16 @@ $('profF').addEventListener('submit',e=>{
 });
 EMOJI.forEach(e=>{const b=el('button',null,e);b.type='button';b.setAttribute('aria-label','Avatar '+e);b.onclick=()=>{pe=pe===e?'':e;pi='';pSel()};$('pem').append(b)});
 SW.forEach(c=>{const b=el('button');b.type='button';b.dataset.c=c;b.style.background=c;b.setAttribute('aria-label','Color '+c);b.onclick=()=>{pc=pc===c?'':c;pSel()};$('psw').append(b)});
-
+ 
 drawSnd();
 function saveDraft(){if(room&&!editing){drafts[room]=msg.value;store.set('cr-drafts',drafts)}}
 function stopEdit(){if(editing){editing=null;msg.value='';fit()}}
 function startEdit(m){editing=m;setReply(null);msg.value=m.t;fit();$('rt').textContent='Editing your message. Press Esc to cancel.';bar.hidden=false;msg.focus()}
-function delMsg(m){
+async function delMsg(m){
   if(!confirm('Delete this message for everyone?'))return;
-  const i=rand(10);
-  ingest({i:i,k:'x',u:uid,n:name,m:m.i,ts:Date.now()});
-  post({k:'x',i:i,u:uid,n:name,m:m.i}).catch(x=>{m.del=0;schedule();say(why(x))});
+  const i=rand(10),sg=await trySign(['x',room,i,uid,m.i].join('|'));
+  ingest({i:i,k:'x',u:uid,n:name,m:m.i,sg:sg,ts:Date.now()});
+  post({k:'x',i:i,u:uid,n:name,m:m.i,sg:sg}).catch(x=>{m.del=0;schedule();say(why(x))});
 }
 function leaveRoom(c){
   rooms=rooms.filter(r=>r!==c);store.set('cr-rooms',rooms);delete drafts[c];store.set('cr-drafts',drafts);
@@ -1053,7 +1066,7 @@ const mainEl=document.querySelector('main'),hasFiles=e=>e.dataTransfer&&[...e.da
 ['dragenter','dragover'].forEach(t=>mainEl.addEventListener(t,e=>{if(hasFiles(e)){e.preventDefault();mainEl.classList.add('drag')}}));
 mainEl.addEventListener('dragleave',()=>mainEl.classList.remove('drag'));
 mainEl.addEventListener('drop',e=>{mainEl.classList.remove('drag');if(hasFiles(e)){e.preventDefault();attach(e.dataTransfer.files)}});
-
+ 
 function pTab(k){
   document.querySelectorAll('#profF .ptabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===k));
   document.querySelectorAll('#profF .pane').forEach(p=>{p.hidden=+p.dataset.p!==k});
@@ -1110,7 +1123,7 @@ async function seal(key,obj){
   return{v:b64(iv),c:b64(new Uint8Array(await sub.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(JSON.stringify(obj)))))};
 }
 async function unseal(key,o){return JSON.parse(new TextDecoder().decode(await sub.decrypt({name:'AES-GCM',iv:unb64(o.v)},key,unb64(o.c))))}
-
+ 
 let ies=null,own=null,rES=null,repU=null,kpP=null,kpU='';
 const rparts=new Map(),unreadDM={};
 const frD=$('frD'),repD=$('repD'),ownD=$('ownD'),repV=$('repV');
@@ -1123,7 +1136,7 @@ const cleanSk=k=>k&&typeof k==='object'&&k.kty==='EC'&&k.crv==='P-256'&&k.d&&k.x
 const RT=()=>PREFIX+'r-'+ADMIN_PUB.x.slice(0,20).replace(/[^A-Za-z0-9_-]/g,'');
 const clampM=a=>(Array.isArray(a)?a:[]).slice(-300).map(m=>({u:S(m&&m.u,24),n:S(m&&m.n,24),t:S(m&&m.t,500),ts:+(m&&m.ts)||0}));
 const clampRep=r=>({r:S(r.r,16),ts:+r.ts||Date.now(),from:{u:S(r.from.u,24),n:S(r.from.n,24)},about:{u:S(r.about.u,24),n:S(r.about.n,24)},why:S(r.why,40),note:S(r.note,300),where:S(r.where,30),ch:clampM(r.ch),dm:clampM(r.dm)});
-
+ 
 function keys(){
   if(kpU!==acct.un||!kpP){
     kpU=acct.un;
@@ -1142,7 +1155,7 @@ function keys(){
   }
   return kpP;
 }
-
+ 
 // ----- friends, blocks, direct messages -----
 function keepDM(u,m){
   const c=acct.dms[u]=acct.dms[u]||[];
@@ -1190,7 +1203,7 @@ function blockU(u,n){
   saveAcct();drawFriends();schedule();say('Blocked '+n+'. You won’t see their messages.');
 }
 function unblock(u){acct.blocked=acct.blocked.filter(x=>x!==u);saveAcct();drawFriends();schedule()}
-
+ 
 function drawFriends(){
   if(!acct)return;
   const n=Object.keys(acct.req).length+Object.values(unreadDM).reduce((a,b)=>a+b,0);
@@ -1252,7 +1265,7 @@ function connectInbox(){
     saveAcct();drawFriends();
   };
 }
-
+ 
 // ----- reports (encrypted so only the owner can read them) -----
 function openReport(u,n){
   repU={u:u,n:n};
@@ -1282,7 +1295,7 @@ $('repF').addEventListener('submit',async e=>{
   }catch(x){eb.textContent='Couldn’t send the report. Try again in a moment.';eb.hidden=false}
   btn.disabled=false;
 });
-
+ 
 // ----- owner access (the _llamaz_ account) -----
 const getOwner=()=>store.get('llz-owner',null);
 function ownerOpen(){
@@ -1533,7 +1546,7 @@ const tagColor=l=>TAGC[l.toLowerCase()]||'hsl('+hue(l)+' 55% 34%)';
 const tagEl=l=>{const t=el('span','tgb',l);t.style.setProperty('--tc',tagColor(l));return t};
 const RESV=['owner','admin','administrator','staff','moderator','mod','support','team','developer','dev','betatester','testaccount'];
 const badName=n=>{const k=String(n).toLowerCase().replace(/[^a-z0-9]/g,'');return !!k&&(RESV.includes(k)||k.startsWith('llamaz'))};
-const msgCanon=ev=>['m',room,ev.i,ev.u,ev.t,ev.a?1:0,ev.f?ev.f.u:''].join('|');
+const msgCanon=ev=>['m',room,ev.i,ev.u,ev.ot!==undefined?ev.ot:ev.t,ev.a?1:0,ev.f?ev.f.u:''].join('|');
 const isVer=u=>{
   const t=tags[u];
   if(!t)return false;
@@ -1545,15 +1558,22 @@ async function signMsg(str){
   return b64(new Uint8Array(await sub.sign({name:'ECDSA',hash:'SHA-256'},sigK,new TextEncoder().encode(str))));
 }
 async function trySign(str){try{await keys();return await signMsg(str)}catch(e){return undefined}}
-async function vfyMsg(ev){
-  if(isDM(room))return;
-  const t=tags[ev.u];
-  if(!t||!ev.sg){ev.vs=false;schedule();return}
+async function vOne(e,canon){
+  const t=tags[e.u];
+  if(!t||!e.sg)return false;
   try{
     const k=await sub.importKey('jwk',{kty:'EC',crv:'P-256',x:t.x,y:t.y,ext:true},ECDSA,false,['verify']);
-    ev.vs=await sub.verify({name:'ECDSA',hash:'SHA-256'},k,unb64(ev.sg),new TextEncoder().encode(msgCanon(ev)));
-  }catch(e){ev.vs=false}
-  schedule();
+    return await sub.verify({name:'ECDSA',hash:'SHA-256'},k,unb64(e.sg),new TextEncoder().encode(canon));
+  }catch(x){return false}
+}
+async function vfyMsg(ev){
+  if(isDM(room))return;
+  const ok=await vOne(ev,msgCanon(ev));
+  if(ok){
+    if(ev.es&&!(await vOne(ev.es,['e',room,ev.es.i,ev.u,ev.i,ev.es.t].join('|')))){ev.t=ev.ot;ev.ed=0;ev.es=null}
+    if(ev.ds&&!(await vOne(ev.ds,['x',room,ev.ds.i,ev.u,ev.i].join('|')))){ev.del=0;ev.ds=null}
+  }
+  ev.vs=ok;schedule();
 }
 function decorate(m,nb,h){
   const t=tags[m.u];
