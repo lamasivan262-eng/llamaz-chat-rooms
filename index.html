@@ -433,11 +433,11 @@ main.drag{outline:3px dashed var(--ring);outline-offset:-6px}
 // Messages are relayed through a free public pub/sub server. Swap this for your own ntfy server if you host one.
 const SERVER='https://ntfy.sh',PREFIX='llamaz-';
 // Owner: open Owner access on the sign-in screen, then replace the next line with the one it shows you.
-const ADMIN_PUB={x:'l-P-WiqtOkAwG3oXCsP2R9ihP8vBbah52kY0bQIYT8k',y:'fKtpLLCPf1DGlignj5-nw7kn3AqPTwSF7jALRrSYHQI',sx:'vHa73nWiiVVBODJVc_jZNmk-qPGm29i1gh2nABn-I5E',sy:'NqmxBVR_hj34lLGriySYfEAOqBwI82lnqSGq6mxvSEE'};
+const ADMIN_PUB={x:'',y:'',sx:'',sy:''};
 // Owner: Owner access can also give you a line to paste here that permanently bans people.
 const BANNED=[];
 // Owner: Owner access can also give you a line to paste here that makes staff tags permanent.
-const STAFF=[["o9ci1z0k4cvm","Owner","3IFTLShUFfvEGGq4bBjAOQSKi3AM5xkSa3J_05Z_EQ4","oeeybcdSBrmpRKu9DOR8Bj9JKji3p26BQi0dJj__qiA"]];
+const STAFF=[];
 const $=id=>document.getElementById(id);
 const app=$('app'),log=$('log'),msg=$('msg'),notice=$('notice'),nav=$('rooms'),dot=$('dot'),state=$('state'),title=$('title'),invite=$('invite'),nameD=$('nameD'),nm=$('nm'),emojis=$('emojis'),bar=$('replybar');
 const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
