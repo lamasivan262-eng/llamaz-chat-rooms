@@ -177,7 +177,7 @@ button.brand{background:none;border:0;color:inherit;text-align:left;width:100%}
 .menu button{border:1px solid var(--line);background:none;border-radius:.6rem;padding:.6rem;text-align:left}
 @media (prefers-reduced-motion:reduce){.srv{transition:none}}
 @media (max-width:720px){aside{inset:0 auto 0 72px;width:240px;transform:translateX(calc(-100% - 72px))}#rail{position:fixed;inset:0 auto 0 0;width:72px;transform:translateX(-100%);z-index:3}.open #rail{transform:none}}
- 
+
 #profD{width:min(46rem,94vw)}
 .phead{display:flex;justify-content:space-between;align-items:center}
 .phead h2{margin:0}
@@ -433,11 +433,11 @@ main.drag{outline:3px dashed var(--ring);outline-offset:-6px}
 // Messages are relayed through a free public pub/sub server. Swap this for your own ntfy server if you host one.
 const SERVER='https://ntfy.sh',PREFIX='llamaz-';
 // Owner: open Owner access on the sign-in screen, then replace the next line with the one it shows you.
-const ADMIN_PUB={x:'FPvhQLVFqKHXtjnzmJ__kEvwnSCBVAMPLLx3AecRLR0',y:'PMhal0Mn6HGDPHF8kNEFVM_1iCTYnSfAEw8AKS3fx50',sx:'aCApqoYgv5eI8kUPp_RWfzdZtOXoHwrRUTsqm4tX44w',sy:'kwwslgg5xlQG_EMSqQonn2xMOOPF_ZX0ptZlZ1A2P_A'};
+const ADMIN_PUB={x:'8tT9xgnNy1MviOlnRI3XS8WeuD9KX1gzHq4GcAGuY80',y:'jDUgnsP--aAC2inAGalNPtbkCy1lHdehRPRpuMuhIQw',sx:'Z84zQhyqSnNuccev-lsm4vSiAucFCX6jgBDb8fZhzAc',sy:'ZcgGPbhMji2GVYwmjk32fzNSPG7E9K_DJ3eSFjZuMJQ'};
 // Owner: Owner access can also give you a line to paste here that permanently bans people.
 const BANNED=[];
 // Owner: Owner access can also give you a line to paste here that makes staff tags permanent.
-const STAFF=[["o9ci1z0k4cvm","Owner","3IFTLShUFfvEGGq4bBjAOQSKi3AM5xkSa3J_05Z_EQ4","oeeybcdSBrmpRKu9DOR8Bj9JKji3p26BQi0dJj__qiA"]];
+const STAFF=[];
 const $=id=>document.getElementById(id);
 const app=$('app'),log=$('log'),msg=$('msg'),notice=$('notice'),nav=$('rooms'),dot=$('dot'),state=$('state'),title=$('title'),invite=$('invite'),nameD=$('nameD'),nm=$('nm'),emojis=$('emojis'),bar=$('replybar');
 const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -449,14 +449,19 @@ const clock=ts=>new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-dig
 const stamp=ts=>new Date(ts).toDateString()===new Date().toDateString()?clock(ts):new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'})+', '+clock(ts);
 const initial=n=>{const c=Array.from(n)[0];return c?c.toUpperCase():'?'};
 const dayLabel=ts=>{const d=new Date(ts).toDateString(),n=new Date();return d===n.toDateString()?'Today':d===new Date(n-864e5).toDateString()?'Yesterday':new Date(ts).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})};
-const why=e=>e===429?'The free relay is rate-limiting you. Wait a few seconds and try again.':'Couldn’t reach the relay. Check your connection and try again.';
+const why=e=>{
+  const st=e&&e.status;
+  if(st===429)return 'The free relay is limiting your network right now'+(e.text?' (“'+e.text+'”)':'')+'. That limit is on the relay, not on your account, so a new account won’t help. It clears on its own. Try again in a few minutes, or switch to another network.';
+  if(e&&e.text)return 'The relay refused that: '+e.text;
+  return 'Couldn’t reach the relay. Check your connection and try again.';
+};
 const QUICK=['👍','💖','😂','🎉'];
 const EMOJI=Array.from('😀😂😅😊😍😘😎🤔😢😭😡😴🤯🥳🤝👍👎👏🙌🙏💪👀🔥✨💯💖💔🎉🎶🍕☕🌈⭐✅❌🦙🐶🐱🌮🍔🚀😬🙈👋🤣😇🥺');
- 
+
 let uid='',acct=null;const profiles=new Map();
 let name='',rooms=store.get('cr-rooms',[]),room='',es=null,msgs=[],seen=new Map(),reacts=new Map(),queued=false,reply=null,unread=0,snd=store.get('cr-snd',true),ac,ann;
 try{ann=new Set(JSON.parse(sessionStorage.getItem('cr-j')||'[]'))}catch(e){ann=new Set()}
- 
+
 function say(t){notice.textContent=t;notice.hidden=!t}
 function rich(p,text){
   text.split(/(https?:\/\/[^\s<]+|`[^`]+`|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).forEach((s,k)=>{
@@ -480,7 +485,7 @@ function notify(ev){
   if(Date.now()-ev.ts>15000||(!document.hidden&&document.hasFocus()))return;
   unread++;refreshTitle();if(snd)ping();
 }
- 
+
 function drawPeople(){
   const ppl=new Map(),now=Date.now();
   msgs.forEach(m=>{if(!isBlocked(m.u,m.ts))ppl.set(m.u,{n:m.n,t:m.ts,v:m.vs===true})});
@@ -493,7 +498,7 @@ function drawPeople(){
     const sp=el('span'),st=stOf(profiles.get(u)||{});sp.append(el('b',null,u===uid?p.n+' (you)':p.n));if(tags[u]&&p.v)sp.append(tagEl(tags[u].l));if(st)sp.append(el('span','stt',st));r.type='button';r.onclick=()=>card(u,p.n);r.append(av,sp);box.append(r);
   });
 }
- 
+
 function render(){
   const end=log.scrollHeight-log.scrollTop-log.clientHeight<80,by=new Map();
   reacts.forEach((n,k)=>{
@@ -544,7 +549,7 @@ function render(){
   drawPeople();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;render()})}
- 
+
 function ingest(ev){
   if(ev.u!==uid&&isBlocked(ev.u,ev.ts))return;const ex=seen.get(ev.i);
   if(ex){
@@ -574,35 +579,129 @@ function ingest(ev){
   if(ev.k==='m'&&ev.u!==uid&&!ev.pending)notify(ev);
   schedule();
 }
- 
+
 function setState(live){dot.className='dot'+(live?' live':'');state.textContent=live?'Live':'Connecting…'}
-async function post(o,rm){if(isDM(rm||room))throw 0;if(acct&&(acct.banned||acct.tout>Date.now()))throw 0;
+async function post(o,rm){
+  if(isDM(rm||room))throw 0;
+  if(acct&&(acct.banned||acct.tout>Date.now()))throw 0;
   const r=await fetch(SERVER+'/'+PREFIX+(rm||room),{method:'POST',body:JSON.stringify(o)});
-  if(!r.ok)throw r.status;
+  if(!r.ok)throw await relayErr(r);
 }
+async function relayErr(r){let t='';try{t=String((await r.json()).error||'').slice(0,160)}catch(x){}return{status:r.status,text:t}}
 function announce(){
-  if(!name||!room||ann.has(room)||!es||es.readyState!==1)return;
+  if(!name||!room||isDM(room)||ann.has(room)||!es||es.readyState!==1)return;
   ann.add(room);try{sessionStorage.setItem('cr-j',JSON.stringify([...ann]))}catch(e){}
   const mine=room;
   post({k:'j',i:rand(10),u:uid,n:name,p:pub()}).catch(()=>ann.delete(mine));
 }
- 
-function connect(){
-  if(es)es.close();
-  const mine=room;
-  setState(false);
-  es=new EventSource(SERVER+'/'+PREFIX+room+'/sse?since=all');
-  es.onopen=()=>{setState(true);announce()};
-  es.onerror=()=>setState(false);
-  es.onmessage=e=>{
-    if(room!==mine)return;
-    let d,m;
-    try{d=JSON.parse(e.data);if(d.event!=='message')return;m=JSON.parse(d.message)}catch(x){return}
-    const q=m.q&&typeof m.q==='object'?{i:String(m.q.i||''),n:String(m.q.n||'').slice(0,24),t:String(m.q.t||'').slice(0,80)}:null;
+
+let retry=0,retryT=null,connT=null,lastT=0;
+// One connection carries everything this app listens to (current room, its server's channel list,
+// your inbox, and the ban/tag list). The free relay allows only 30 open connections and 60 quick requests per network.
+function TOP(){
+  const t=[],lock=acct&&(acct.banned||acct.tout>Date.now());
+  if(!lock&&room&&!isDM(room)){t.push(PREFIX+room);if(srv)t.push(PREFIX+srv+'_meta')}
+  if(!lock&&uid)t.push(PREFIX+'inbox-'+uid);
+  if(ADMIN_PUB.sx)t.push(PREFIX+BT());
+  return t;
+}
+function onEv(e){
+  let d,m;
+  try{d=JSON.parse(e.data);if(d.event!=='message')return;m=JSON.parse(d.message)}catch(x){return}
+  if(+d.time>lastT)lastT=+d.time;
+  const tp=d.topic;
+  if(ADMIN_PUB.sx&&tp===PREFIX+BT())onBans(m);
+  else if(uid&&tp===PREFIX+'inbox-'+uid)onInbox(d,m);
+  else if(srv&&tp===PREFIX+srv+'_meta')onMeta(m);
+  else if(room&&tp===PREFIX+room)onRoom(d,m);
+}
+function onRoom(d,m){
+  const q=m.q&&typeof m.q==='object'?{i:String(m.q.i||''),n:String(m.q.n||'').slice(0,24),t:String(m.q.t||'').slice(0,80)}:null;
     ingest({i:String(m.i||d.id),k:m.k||'m',u:String(m.u||''),n:String(m.n||'Someone').slice(0,24),t:String(m.t||'').slice(0,500),a:m.a?1:0,q:q,ae:S(m.ae,8),ac:C(m.ac),p:P(m.p),f:fileOf(m.f),sg:S(m.sg,120),m:String(m.m||''),e:String(m.e||'').slice(0,8),on:m.on?1:0,ts:(+d.time||0)*1000});
+}
+async function onInbox(d,m){
+  const id=S(m.i||d.id,24),from=S(m.u,24),n=S(m.n,24)||'Someone',pk=cleanPk(m.pk),ts=(+d.time||0)*1000;
+    if(m.k==='rr'){
+      if(!acct||!ADMIN_PUB.sx||acct.seenIn.includes(id))return;
+      const rn=S(m.n,24),rb=[1,2].includes(+m.b)?+m.b:0,rq=rb===2?S(m.q,6):'',rts=+m.ts||0;
+      if(!(await verifyAdmin(['rr',S(m.r,16),rb,rts,uid,rn].concat(rb===2?[rq]:[]).join('|'),S(m.g,120))))return;
+      acct.seenIn.push(id);saveAcct();
+      resQ.push({a:rb>0,t:'The Llamaz team reviewed your report about '+rn+' and '+(rb===1?'banned this user.':rb===2?'timed this user out for '+(durLbl(rq)||'a while')+'.':'did not ban this user.')});
+      showRes();return;
+    }
+    if(!acct||!from||from===uid||isBlocked(from,ts)||acct.seenIn.includes(id))return;
+    acct.seenIn.push(id);if(acct.seenIn.length>300)acct.seenIn.shift();
+    try{
+      if(m.k==='fr'&&pk&&!acct.friends[from]){
+        if(acct.out[from]){delete acct.out[from];acct.friends[from]={n:n,pk:pk}}
+        else acct.req[from]={n:n,pk:pk,ts:ts};
+      }else if(m.k==='fa'&&pk&&acct.out[from]){delete acct.out[from];acct.friends[from]={n:n,pk:pk}}
+      else if(m.k==='fx'){delete acct.friends[from];delete acct.out[from];delete acct.req[from]}
+      else if(m.k==='dm'&&acct.friends[from]&&m.x){
+        const o=await decWith(acct.sk,m.x),t=S(o&&o.t,500);
+        if(!t)return;
+        const dm={i:id,k:'m',u:from,n:acct.friends[from].n,t:t,ts:ts};
+        keepDM(from,dm);
+        if(room==='dm-'+from)ingest(dm);
+        else{unreadDM[from]=(unreadDM[from]||0)+1;say('New message from '+dm.n+'. Open Friends to read it.');if(snd&&Date.now()-ts<15000)ping()}
+      }
+    }catch(x){return}
+    saveAcct();drawFriends();
+}
+async function onBans(m){
+  try{
+    const ts=+m.ts||0;
+    if(m.k==='tg'){
+        const t=(Array.isArray(m.t)?m.t:[]).slice(0,20).map(p=>[S(p&&p[0],24),cleanTag(p&&p[1]),S(p&&p[2],60),S(p&&p[3],60)]);
+        if(ts<=tagsTs||!(await verifyAdmin(['tg',ts,t.map(p=>p.join(':')).join(',')].join('|'),S(m.g,120))))return;
+        tagsTs=ts;tags=Object.assign(tagMap(STAFF),tagMap(t));store.set('llz-tags',{ts:ts,t:t});
+        msgs.forEach(x=>{x.vs=undefined;if(x.k==='m'&&tags[x.u])vfyMsg(x)});
+        schedule();return;
+      }
+      if(m.k!=='bl')return;
+      const u=(Array.isArray(m.u)?m.u:[]).slice(0,150).map(x=>S(x,24));
+      const x=(Array.isArray(m.x)?m.x:[]).slice(0,100).map(p=>[S(p&&p[0],24),+(p&&p[1])||0,+(p&&p[2])||0]);
+      const sg=['bl',ts,u.join(',')].concat(x.length?[x.map(p=>p.join(':')).join(',')]:[]).join('|');
+      if(ts<=bansTs||!(await verifyAdmin(sg,S(m.g,120))))return;
+      bansTs=ts;bans=new Set([...BANNED,...u]);
+      touts=Object.fromEntries(x.filter(p=>p[0]&&p[2]).map(p=>[p[0],[p[1],p[2]]]));
+      store.set('llz-bans',{ts:ts,u:u,x:x});
+      schedule();
+      if(acct)checkSelf();
+  }catch(e2){}
+}
+function onMeta(m){
+  const s=srvOf(srv);
+  if(!s||m.k!=='s'||!Array.isArray(m.c))return;
+  let add=false;
+  m.c.slice(0,20).forEach(c=>{c=clean(String(c)).slice(0,24);if(c&&!s.ch.includes(c)&&s.ch.length<20){s.ch.push(c);add=true}});
+  if(add){saveAcct();drawSide()}
+}
+function openES(fresh){
+  if(es){es.onopen=es.onerror=es.onmessage=null;es.close();es=null}
+  const tp=TOP();
+  if(!tp.length)return;
+  if(fresh)lastT=0;
+  // a reconnect only asks for what was missed, because replayed history counts against the relay's daily bandwidth limit
+  const mine=es=new EventSource(SERVER+'/'+tp.join(',')+'/sse?since='+(lastT||'all'));
+  es.onopen=()=>{retry=0;setState(true);announce()};
+  es.onmessage=onEv;
+  es.onerror=()=>{
+    if(es!==mine)return;
+    mine.onopen=mine.onerror=mine.onmessage=null;mine.close();es=null;
+    setState(false);
+    retry=Math.min(retry+1,7);
+    if(retry>=3)say('The relay is slow to answer or is limiting connections from your network. Retrying automatically…');
+    retryT=setTimeout(()=>openES(false),Math.min(4e3*Math.pow(2,retry-1),3e5)*(.75+Math.random()/2));
   };
 }
- 
+function connect(){
+  clearTimeout(retryT);clearTimeout(connT);
+  if(es){es.onopen=es.onerror=es.onmessage=null;es.close();es=null}
+  setState(false);
+  connT=setTimeout(()=>openES(true),300);
+}
+
 function drawRooms(){
   nav.textContent='';
   const sv=srvOf(srv);
@@ -626,7 +725,7 @@ function drawMe(){
   b.append(avEl(uid,name),sp);
 }
 function drawSnd(){$('snd').textContent=snd?'🔔 Sound on':'🔕 Sound off'}
- 
+
 function enter(c){
   c=clean(c||'');
   if(!c||c===room)return;
@@ -635,9 +734,9 @@ function enter(c){
   if(location.hash.slice(1)!==c)location.hash=c;
   msgs=[];seen=new Map();reacts=new Map();unread=0;say('');setReply(null);editing=null;msg.value=drafts[c]||'';fit();$('q').value='';
   title.textContent=isDM(c)?'@ '+dmName(c):'# '+lab(c);refreshTitle();msg.placeholder=isDM(c)?'Message '+dmName(c):'Message #'+lab(c);
-  drawRail();drawSide();connectMeta();if(isDM(c)){if(es)es.close();es=null;setState(true);loadDM(c.slice(3))}else connect();render();
+  drawRail();drawSide();connect();if(isDM(c))loadDM(c.slice(3));render();
 }
- 
+
 function fit(){msg.style.height='auto';msg.style.height=Math.min(msg.scrollHeight,140)+'px'}
 function setReply(m){
   if(m)stopEdit();reply=m?{i:m.i,n:m.n,t:(m.t||(m.f?'📎 '+m.f.n:'')).slice(0,80)}:null;
@@ -649,7 +748,7 @@ function setName(v){
   if(!v)return;
   if(badName(v)&&!tags[uid]){say('That display name is reserved.');return}saveProfile(Object.assign({},acct.profile,{n:v}));
 }
- 
+
 function react(mid,e){
   if(!name){askName();return}
   const key=mid+'|'+e+'|'+uid,on=!reacts.has(key),i=rand(10);
@@ -659,7 +758,7 @@ function react(mid,e){
     schedule();say(why(x));
   });
 }
- 
+
 async function send(){
   if(isDM(room)){sendDM();return}const raw=msg.value;
   let t=raw.trim().slice(0,500),a=0;
@@ -675,7 +774,7 @@ async function send(){
   try{try{await keys();m.sg=await signMsg(['m',room,i,uid,t,a?1:0,''].join('|'))}catch(e0){}if(tags[uid])vfyMsg(m);await post({k:'m',i:i,u:uid,n:name,ae:acct.profile.ae,ac:acct.profile.ac,t:t,a:a,q:q,sg:m.sg})}
   catch(e){msgs=msgs.filter(x=>x!==m);seen.delete(i);msg.value=raw;fit();schedule();say(why(e))}
 }
- 
+
 function askName(){openProfile()}
 $('nameF').addEventListener('submit',e=>{
   e.preventDefault();
@@ -685,7 +784,7 @@ $('nameF').addEventListener('submit',e=>{
 nameD.addEventListener('cancel',e=>{if(!name)e.preventDefault()});
 $('me').onclick=askName;
 $('snd').onclick=()=>{snd=!snd;store.set('cr-snd',snd);drawSnd()};
- 
+
 $('joinF').addEventListener('submit',e=>{e.preventDefault();enter($('code').value);$('code').value='';app.classList.remove('open')});
 $('newBtn').onclick=()=>{enter(rand(12));app.classList.remove('open')};
 $('menu').onclick=()=>app.classList.add('open');
@@ -694,7 +793,7 @@ window.addEventListener('hashchange',()=>{if(acct)route(location.hash.slice(1))}
 const seenNow=()=>{unread=0;refreshTitle()};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)seenNow()});
 window.addEventListener('focus',seenNow);
- 
+
 const web=/^https?:$/.test(location.protocol);
 invite.textContent=web?'Copy invite link':'Copy room code';
 invite.onclick=async()=>{
@@ -702,7 +801,7 @@ invite.onclick=async()=>{
   try{await navigator.clipboard.writeText(text);invite.textContent='Copied';setTimeout(()=>{invite.textContent=web?'Copy invite link':'Copy room code'},1500)}
   catch(e){prompt('Copy this:',text)}
 };
- 
+
 $('compose').addEventListener('submit',e=>{e.preventDefault();send()});
 msg.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}else if(e.key==='ArrowUp'&&!msg.value){const l=msgs.filter(x=>x.u===uid&&x.k==='m'&&!x.del&&!x.pending).pop();if(l){e.preventDefault();startEdit(l)}}});
 msg.addEventListener('input',fit);
@@ -716,7 +815,7 @@ EMOJI.forEach(e=>{
   emojis.append(b);
 });
 setInterval(drawPeople,6e4);
- 
+
 const S=(v,n)=>String(v==null?'':v).slice(0,n),C=v=>/^#[0-9a-f]{6}$/i.test(v)?v:'';
 const P=p=>p&&typeof p==='object'?{ae:S(p.ae,8),ac:C(p.ac),pr:S(p.pr,20),st:S(p.st,40),bc:C(p.bc),im:IM(p.im),sx:+p.sx||0,tg:S(p.tg,80),bio:S(p.bio,160)}:null;
 const pub=()=>{const p=acct.profile;return{ae:p.ae,ac:p.ac,bc:p.bc||'',im:p.im||'',pr:p.pr,st:p.st,sx:p.sx||0,tg:p.tg||'',bio:p.bio}};
@@ -726,7 +825,7 @@ const profD=$('profD'),cardD=$('cardD'),SW=['#E5484D','#E5871B','#C99A06','#2FA6
 let mode='login',pe='',pc='',pb='',pi='',editing=null;
 const drafts=store.get('cr-drafts',{});
 const stOf=p=>p.st&&(!p.sx||p.sx>Date.now())?p.st:'',tagStr=v=>v.split(',').map(x=>x.trim().slice(0,16)).filter(Boolean).slice(0,5).join(', ');
- 
+
 function prof(u,p,ts){
   if(u===uid)return;
   const o=profiles.get(u)||{};
@@ -745,7 +844,7 @@ function saveProfile(p){
   syncMe();drawMe();schedule();
   if(es&&es.readyState===1)post({k:'p',i:rand(10),u:uid,n:name,p:pub()}).catch(x=>say(why(x)));
 }
- 
+
 async function hashPw(pw,salt){
   const enc=new TextEncoder();
   if(window.crypto&&crypto.subtle){
@@ -779,11 +878,11 @@ function login(un,isNew,fresh){
 }
 function logout(){
   if(es)es.close();
-  if(ies)ies.close();ies=null;kpU='';if(mes)mes.close();mes=null;mfor='';srv='';es=null;room='';msgs=[];seen=new Map();reacts=new Map();acct=null;uid='';name='';
+  clearTimeout(retryT);clearTimeout(connT);if(ies)ies.close();ies=null;kpU='';if(mes)mes.close();mes=null;mfor='';srv='';es=null;room='';msgs=[];seen=new Map();reacts=new Map();acct=null;uid='';name='';
   [profD,cardD].forEach(d=>{if(d.open)d.close()});
   if(bES)bES.close();bES=null;$('banned').hidden=true;store.set('llz-session','');setReply(null);showAuth();
 }
- 
+
 function pSel(){
   const d='hsl('+hue(uid)+' 48% 40%)',pv=$('pav'),n=$('pn').value||name;
   pv.textContent=pi?'':(pe||initial(n));
@@ -829,7 +928,7 @@ function card(u,n){
   };
   drawCx(u,p.n||n);if(!cardD.open)cardD.showModal();
 }
- 
+
 $('tLogin').onclick=()=>authMode('login');$('tSign').onclick=()=>authMode('sign');
 $('authF').addEventListener('submit',async e=>{
   e.preventDefault();
@@ -864,7 +963,7 @@ $('profF').addEventListener('submit',e=>{
 });
 EMOJI.forEach(e=>{const b=el('button',null,e);b.type='button';b.setAttribute('aria-label','Avatar '+e);b.onclick=()=>{pe=pe===e?'':e;pi='';pSel()};$('pem').append(b)});
 SW.forEach(c=>{const b=el('button');b.type='button';b.dataset.c=c;b.style.background=c;b.setAttribute('aria-label','Color '+c);b.onclick=()=>{pc=pc===c?'':c;pSel()};$('psw').append(b)});
- 
+
 drawSnd();
 function saveDraft(){if(room&&!editing){drafts[room]=msg.value;store.set('cr-drafts',drafts)}}
 function stopEdit(){if(editing){editing=null;msg.value='';fit()}}
@@ -923,25 +1022,7 @@ function cleanSrv(o){
 }
 function inviteText(){const s=srvOf(srv);return(web?location.href.split('#')[0]+'#join=':'')+enc({i:s.id,n:s.n,a:s.ae,c:s.ch})}
 function postMeta(s){fetch(SERVER+'/'+PREFIX+s.id+'_meta',{method:'POST',body:JSON.stringify({k:'s',c:s.ch})}).catch(()=>{})}
-function connectMeta(){
-  if(mfor===srv)return;
-  if(mes)mes.close();
-  mes=null;mfor=srv;
-  if(!srv)return;
-  const sid=srv;
-  mes=new EventSource(SERVER+'/'+PREFIX+sid+'_meta/sse?since=all');
-  mes.onmessage=e=>{
-    try{
-      const d=JSON.parse(e.data);
-      if(d.event!=='message')return;
-      const m=JSON.parse(d.message),s=srvOf(sid);
-      if(m.k!=='s'||!s||!Array.isArray(m.c))return;
-      let add=false;
-      m.c.slice(0,20).forEach(c=>{c=clean(String(c)).slice(0,24);if(c&&!s.ch.includes(c)&&s.ch.length<20){s.ch.push(c);add=true}});
-      if(add){saveAcct();if(srv===sid)drawSide()}
-    }catch(x){}
-  };
-}
+function connectMeta(){}
 function drawRail(){
   const r=$('rail');r.textContent='';
   const h=el('button','srv'+(srv?'':' on'),'🦙');
@@ -1043,13 +1124,13 @@ async function sendFile(f,cap){
   ingest(m);
   try{
     const r=await fetch(SERVER+'/'+PREFIX+rm+'?filename='+encodeURIComponent(f.name),{method:'POST',body:new Blob([f],{type:'text/plain'})});
-    if(!r.ok)throw r.status;
+    if(!r.ok)throw await relayErr(r);
     const a=(await r.json()).attachment;
     if(!a||!a.url)throw 0;
     await post({k:'m',i:i,u:uid,n:name,ae:acct.profile.ae,ac:acct.profile.ac,t:cap||'',sg:await trySign(['m',rm,i,uid,cap||'',0,a.url].join('|')),f:{n:S(a.name,80),y:S(a.type,60),z:+a.size||f.size,x:(+a.expires||0)*1000,u:a.url}},rm);
   }catch(e){
     msgs=msgs.filter(x=>x!==m);seen.delete(i);schedule();
-    say(e===429?'The free relay is rate-limiting uploads. Wait a moment and try again.':e===413?'That file is too large for the relay.':'Couldn’t upload that file. Check your connection and try again.');
+    say(e&&e.status===413?'That file is too large for the relay.':why(e));
   }
 }
 function attach(files){
@@ -1066,7 +1147,7 @@ const mainEl=document.querySelector('main'),hasFiles=e=>e.dataTransfer&&[...e.da
 ['dragenter','dragover'].forEach(t=>mainEl.addEventListener(t,e=>{if(hasFiles(e)){e.preventDefault();mainEl.classList.add('drag')}}));
 mainEl.addEventListener('dragleave',()=>mainEl.classList.remove('drag'));
 mainEl.addEventListener('drop',e=>{mainEl.classList.remove('drag');if(hasFiles(e)){e.preventDefault();attach(e.dataTransfer.files)}});
- 
+
 function pTab(k){
   document.querySelectorAll('#profF .ptabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===k));
   document.querySelectorAll('#profF .pane').forEach(p=>{p.hidden=+p.dataset.p!==k});
@@ -1123,7 +1204,7 @@ async function seal(key,obj){
   return{v:b64(iv),c:b64(new Uint8Array(await sub.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(JSON.stringify(obj)))))};
 }
 async function unseal(key,o){return JSON.parse(new TextDecoder().decode(await sub.decrypt({name:'AES-GCM',iv:unb64(o.v)},key,unb64(o.c))))}
- 
+
 let ies=null,own=null,rES=null,repU=null,kpP=null,kpU='';
 const rparts=new Map(),unreadDM={};
 const frD=$('frD'),repD=$('repD'),ownD=$('ownD'),repV=$('repV');
@@ -1136,7 +1217,7 @@ const cleanSk=k=>k&&typeof k==='object'&&k.kty==='EC'&&k.crv==='P-256'&&k.d&&k.x
 const RT=()=>PREFIX+'r-'+ADMIN_PUB.x.slice(0,20).replace(/[^A-Za-z0-9_-]/g,'');
 const clampM=a=>(Array.isArray(a)?a:[]).slice(-300).map(m=>({u:S(m&&m.u,24),n:S(m&&m.n,24),t:S(m&&m.t,500),ts:+(m&&m.ts)||0}));
 const clampRep=r=>({r:S(r.r,16),ts:+r.ts||Date.now(),from:{u:S(r.from.u,24),n:S(r.from.n,24)},about:{u:S(r.about.u,24),n:S(r.about.n,24)},why:S(r.why,40),note:S(r.note,300),where:S(r.where,30),ch:clampM(r.ch),dm:clampM(r.dm)});
- 
+
 function keys(){
   if(kpU!==acct.un||!kpP){
     kpU=acct.un;
@@ -1155,7 +1236,7 @@ function keys(){
   }
   return kpP;
 }
- 
+
 // ----- friends, blocks, direct messages -----
 function keepDM(u,m){
   const c=acct.dms[u]=acct.dms[u]||[];
@@ -1203,7 +1284,7 @@ function blockU(u,n){
   saveAcct();drawFriends();schedule();say('Blocked '+n+'. You won’t see their messages.');
 }
 function unblock(u){acct.blocked=acct.blocked.filter(x=>x!==u);saveAcct();drawFriends();schedule()}
- 
+
 function drawFriends(){
   if(!acct)return;
   const n=Object.keys(acct.req).length+Object.values(unreadDM).reduce((a,b)=>a+b,0);
@@ -1229,43 +1310,8 @@ function drawCx(u,n){
   else add('Block',()=>{if(confirm('Block '+n+'? You won’t see their messages.')){cardD.close();blockU(u,n)}});
   add('Report',()=>{cardD.close();openReport(u,n)});
 }
-function connectInbox(){
-  if(ies)ies.close();
-  if(acct.banned||acct.tout>Date.now()){ies=null;return}
-  ies=new EventSource(SERVER+'/'+PREFIX+'inbox-'+uid+'/sse?since=all');
-  ies.onmessage=async e=>{
-    let d,m;
-    try{d=JSON.parse(e.data);if(d.event!=='message')return;m=JSON.parse(d.message)}catch(x){return}
-    const id=S(m.i||d.id,24),from=S(m.u,24),n=S(m.n,24)||'Someone',pk=cleanPk(m.pk),ts=(+d.time||0)*1000;
-    if(m.k==='rr'){
-      if(!acct||!ADMIN_PUB.sx||acct.seenIn.includes(id))return;
-      const rn=S(m.n,24),rb=[1,2].includes(+m.b)?+m.b:0,rq=rb===2?S(m.q,6):'',rts=+m.ts||0;
-      if(!(await verifyAdmin(['rr',S(m.r,16),rb,rts,uid,rn].concat(rb===2?[rq]:[]).join('|'),S(m.g,120))))return;
-      acct.seenIn.push(id);saveAcct();
-      resQ.push({a:rb>0,t:'The Llamaz team reviewed your report about '+rn+' and '+(rb===1?'banned this user.':rb===2?'timed this user out for '+(durLbl(rq)||'a while')+'.':'did not ban this user.')});
-      showRes();return;
-    }
-    if(!acct||!from||from===uid||isBlocked(from,ts)||acct.seenIn.includes(id))return;
-    acct.seenIn.push(id);if(acct.seenIn.length>300)acct.seenIn.shift();
-    try{
-      if(m.k==='fr'&&pk&&!acct.friends[from]){
-        if(acct.out[from]){delete acct.out[from];acct.friends[from]={n:n,pk:pk}}
-        else acct.req[from]={n:n,pk:pk,ts:ts};
-      }else if(m.k==='fa'&&pk&&acct.out[from]){delete acct.out[from];acct.friends[from]={n:n,pk:pk}}
-      else if(m.k==='fx'){delete acct.friends[from];delete acct.out[from];delete acct.req[from]}
-      else if(m.k==='dm'&&acct.friends[from]&&m.x){
-        const o=await decWith(acct.sk,m.x),t=S(o&&o.t,500);
-        if(!t)return;
-        const dm={i:id,k:'m',u:from,n:acct.friends[from].n,t:t,ts:ts};
-        keepDM(from,dm);
-        if(room==='dm-'+from)ingest(dm);
-        else{unreadDM[from]=(unreadDM[from]||0)+1;say('New message from '+dm.n+'. Open Friends to read it.');if(snd&&Date.now()-ts<15000)ping()}
-      }
-    }catch(x){return}
-    saveAcct();drawFriends();
-  };
-}
- 
+function connectInbox(){}
+
 // ----- reports (encrypted so only the owner can read them) -----
 function openReport(u,n){
   repU={u:u,n:n};
@@ -1295,7 +1341,7 @@ $('repF').addEventListener('submit',async e=>{
   }catch(x){eb.textContent='Couldn’t send the report. Try again in a moment.';eb.hidden=false}
   btn.disabled=false;
 });
- 
+
 // ----- owner access (the _llamaz_ account) -----
 const getOwner=()=>store.get('llz-owner',null);
 function ownerOpen(){
@@ -1434,36 +1480,7 @@ async function verifyAdmin(str,sig){
     return await sub.verify({name:'ECDSA',hash:'SHA-256'},k,unb64(sig),new TextEncoder().encode(str));
   }catch(e){return false}
 }
-function connectBans(){
-  if(bES)bES.close();
-  bES=null;
-  if(!ADMIN_PUB.sx)return;
-  bES=new EventSource(SERVER+'/'+PREFIX+BT()+'/sse?since=all');
-  bES.onmessage=async e=>{
-    try{
-      const d=JSON.parse(e.data);
-      if(d.event!=='message')return;
-      const m=JSON.parse(d.message),ts=+m.ts||0;
-      if(m.k==='tg'){
-        const t=(Array.isArray(m.t)?m.t:[]).slice(0,20).map(p=>[S(p&&p[0],24),cleanTag(p&&p[1]),S(p&&p[2],60),S(p&&p[3],60)]);
-        if(ts<=tagsTs||!(await verifyAdmin(['tg',ts,t.map(p=>p.join(':')).join(',')].join('|'),S(m.g,120))))return;
-        tagsTs=ts;tags=Object.assign(tagMap(STAFF),tagMap(t));store.set('llz-tags',{ts:ts,t:t});
-        msgs.forEach(x=>{x.vs=undefined;if(x.k==='m'&&tags[x.u])vfyMsg(x)});
-        schedule();return;
-      }
-      if(m.k!=='bl')return;
-      const u=(Array.isArray(m.u)?m.u:[]).slice(0,150).map(x=>S(x,24));
-      const x=(Array.isArray(m.x)?m.x:[]).slice(0,100).map(p=>[S(p&&p[0],24),+(p&&p[1])||0,+(p&&p[2])||0]);
-      const sg=['bl',ts,u.join(',')].concat(x.length?[x.map(p=>p.join(':')).join(',')]:[]).join('|');
-      if(ts<=bansTs||!(await verifyAdmin(sg,S(m.g,120))))return;
-      bansTs=ts;bans=new Set([...BANNED,...u]);
-      touts=Object.fromEntries(x.filter(p=>p[0]&&p[2]).map(p=>[p[0],[p[1],p[2]]]));
-      store.set('llz-bans',{ts:ts,u:u,x:x});
-      schedule();
-      if(acct)checkSelf();
-    }catch(e2){}
-  };
-}
+function connectBans(){}
 function selfState(){
   if(bans.has(uid))return{ban:1};
   const t=touts[uid],n=Date.now();
@@ -1475,8 +1492,7 @@ function checkSelf(){
   else if(acct.banned||acct.tout){acct.banned=0;acct.tout=0;saveAcct();location.reload()}
 }
 function lockBanned(st){
-  [ies,es,mes].forEach(x=>{if(x)x.close()});
-  ies=es=mes=null;mfor='';
+  connect();
   const ban=!st||st.ban;
   $('banT').textContent=ban?'Your account has been banned':'You’re timed out';
   $('banP').textContent=ban?'The Llamaz team reviewed a report and banned this account, so you can’t read or send messages with it.':'The Llamaz team has timed this account out until '+new Date(st.until).toLocaleString()+'. You can use the app again after that.';
